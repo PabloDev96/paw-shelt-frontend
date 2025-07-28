@@ -37,6 +37,7 @@ export default function Login() {
       }
 
       const data = await response.json();
+      console.log("Login OK ✅:", data);
 
       
       localStorage.setItem("token", data.token); // Guardamos el token en localStorage para usarlo después
