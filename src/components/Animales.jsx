@@ -9,6 +9,7 @@ export default function Animales() {
     const navigate = useNavigate();
 
     useEffect(() => {
+        console.log("Animales:", animales);
         const fetchAnimales = async () => {
             try {
                 const token = localStorage.getItem("token");
@@ -55,7 +56,7 @@ export default function Animales() {
             <div className="card-grid">
                 {animales.map((animal) => (
                     <div className="animal-card" key={animal.id}>
-                        <img src={animal.imagen} alt={animal.nombre} />
+                        <img src={animal.fotoPerfilUrl} alt={animal.nombre} />
                         <div className="animal-info">
                             <h3>{animal.nombre}</h3>
                             <p>{animal.tipo}</p>
