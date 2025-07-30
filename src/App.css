@@ -1,0 +1,28 @@
+:root {
+  --light: #CAD2C5;
+  --medium-light: #84A98C;
+  --medium: #52796F;
+  --medium-dark: #354F52;
+  --dark: #2F3E46;
+  --error: #FF6B6B;
+}
+
+/* Estilos personalizados para SweetAlert2 */
+.swal-popup {
+  border-radius: 16px;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.swal-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--dark);
+}
+
+.swal-confirm-button,
+.swal-cancel-button {
+  padding: 10px 24px;
+  font-size: 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+}

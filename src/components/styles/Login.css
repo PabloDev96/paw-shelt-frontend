@@ -19,6 +19,42 @@ html, body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+.login-logo {
+  width: 120px;
+  margin: 0 auto 20px;
+  display: block;
+}
+
+.welcome-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.95);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  animation: fadeOut 3s forwards;
+  z-index: 1000;
+  text-align: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.modal-logo {
+  width: 150px;
+  margin-bottom: 20px;
+}
+
+@keyframes fadeOut {
+  0%   { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { opacity: 0; visibility: hidden; }
+}
+
+
 .login-container {
   width: 100%;
   height: 100vh;

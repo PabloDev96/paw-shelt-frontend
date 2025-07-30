@@ -1,6 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { showSuccess, showError } from "../utils/alerts";
+import Swal from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
 import "./styles/Login.css";
+
+const MySwal = withReactContent(Swal);
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -8,11 +13,30 @@ export default function Login() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  useEffect(() => {
+    MySwal.fire({
+      title: "¡Bienvenido a Pawshelt!",
+      text: "Inicia sesión para empezar a gestionar tu refugio.",
+      imageUrl: "/logo/pawshelt.png",
+      imageWidth: 120,
+      imageAlt: "Logo de Pawshelt",
+      showConfirmButton: false,
+      timer: 2000,
+      background: "var(--light)",
+      color: "var(--dark)",
+      customClass: {
+        popup: 'swal-popup',
+        title: 'swal-title'
+      }
+    });
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!username || !password) {
       setError("Por favor, completa todos los campos.");
+      showError("Campos incompletos", "Debes ingresar usuario y contraseña.");
       return;
     }
 
@@ -24,30 +48,26 @@ export default function Login() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          email: username,
-          password: password,
-        }),
+        body: JSON.stringify({ email: username, password }),
       });
 
       if (!response.ok) {
         const errorText = await response.text();
         setError(`Error: ${errorText}`);
+        showError("Error de autenticación", errorText || "Credenciales incorrectas.");
         return;
       }
 
       const data = await response.json();
-      console.log("Login OK ✅:", data);
+      localStorage.setItem("token", data.token);
 
-      
-      localStorage.setItem("token", data.token); // Guardamos el token en localStorage para usarlo después
-      navigate("/panel"); // Redirige al panel principal de la app
-
-      alert("¡Login exitoso!");
+      await showSuccess("¡Login exitoso!", "Bienvenido a tu panel de gestión.", 2000);
+      navigate("/panel");
 
     } catch (error) {
       console.error("Error al hacer login:", error);
       setError("Error de conexión con el servidor.");
+      showError("Error de conexión", "No se pudo contactar al servidor.");
     }
   };
 

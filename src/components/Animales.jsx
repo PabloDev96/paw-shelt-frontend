@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "./styles/Animales.css";
+import { showSuccess, showError, showConfirm } from "../utils/alerts";
 import { useNavigate } from "react-router-dom";
 import { FaPencilAlt, FaTrashAlt } from "react-icons/fa";
 import { FaCircleInfo } from "react-icons/fa6";
@@ -128,51 +129,56 @@ export default function Animales() {
     };
 
     const handleGuardarAnimal = async (e) => {
-        e.preventDefault();
+  e.preventDefault();
 
-        const token = localStorage.getItem("token");
-        const url = modoEdicion
-            ? `http://localhost:8080/animales/${animalEditandoId}`
-            : `http://localhost:8080/animales`;
+  const token = localStorage.getItem("token");
+  const url = modoEdicion
+    ? `http://localhost:8080/animales/${animalEditandoId}`
+    : `http://localhost:8080/animales`;
 
-        const method = modoEdicion ? "PUT" : "POST";
+  const method = modoEdicion ? "PUT" : "POST";
 
-        try {
-            const response = await fetch(url, {
-                method,
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify(nuevoAnimal),
-            });
+  try {
+    const response = await fetch(url, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(nuevoAnimal),
+    });
 
-            if (!response.ok) {
-                throw new Error("Error al guardar el animal");
-            }
+    if (!response.ok) {
+      throw new Error("Error al guardar el animal");
+    }
 
-            const actualizado = await response.json();
+    const actualizado = await response.json();
 
-            if (modoEdicion) {
-                setAnimales((prev) =>
-                    prev.map((a) => (a.id === animalEditandoId ? actualizado : a))
-                );
-            } else {
-                setAnimales((prev) => [...prev, actualizado]);
-            }
+    if (modoEdicion) {
+      setAnimales((prev) =>
+        prev.map((a) => (a.id === animalEditandoId ? actualizado : a))
+      );
+      showSuccess("Animal actualizado", `${actualizado.nombre} fue editado correctamente.`);
+    } else {
+      setAnimales((prev) => [...prev, actualizado]);
+      showSuccess("Animal creado", `${actualizado.nombre} fue añadido correctamente.`);
+    }
 
-            setMostrarModal(false);
-            setModoEdicion(false);
-            setAnimalEditandoId(null);
-        } catch (err) {
-            console.error(err);
-            alert("No se pudo guardar el animal.");
-        }
-    };
+    setMostrarModal(false);
+    setModoEdicion(false);
+    setAnimalEditandoId(null);
+
+  } catch (err) {
+    console.error(err);
+    showError("Error al guardar", "No se pudo guardar el animal.");
+  }
+};
+
 
     const eliminarAnimal = async (id) => {
-        const confirmacion = window.confirm("¿Seguro que deseas eliminar este animal?");
-        if (!confirmacion) return;
+        const confirmacion = await showConfirm("¿Eliminar animal?", "Esta acción no se puede deshacer.");
+
+        if (!confirmacion.isConfirmed) return;
 
         try {
             const token = localStorage.getItem("token");
@@ -185,12 +191,13 @@ export default function Animales() {
 
             if (response.ok) {
                 setAnimales(animales.filter((a) => a.id !== id));
+                showSuccess("Animal eliminado", "La ficha fue eliminada correctamente.");
             } else {
-                alert("Error al eliminar el animal");
+                showError("Error", "No se pudo eliminar el animal.");
             }
         } catch (err) {
             console.error(err);
-            alert("Error al eliminar el animal");
+            showError("Error de conexión", "No se pudo contactar al servidor.");
         }
     };
 
