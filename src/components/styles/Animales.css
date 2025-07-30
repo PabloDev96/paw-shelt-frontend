@@ -57,3 +57,357 @@
   margin: 0.5rem 0 0;
   color: var(--medium-dark);
 }
+
+/* Botones de filtro */
+.filtros {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.filtros button {
+  background-color: var(--medium-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border: none;
+  padding: 0.5rem 0.8rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.filtros button:hover {
+  background-color: var(--medium);
+}
+
+.icono-btn {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+/* Botón Añadir */
+.acciones {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.añadir-btn {
+  background-color: var(--medium-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  color: white;
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.añadir-btn:hover {
+  background-color: var(--medium);
+}
+
+/* Botones de acción en tarjeta */
+.animal-info button {
+  margin-top: 0.6rem;
+  margin-right: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+/* Botón Editar, Eliminar e Info */
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin: 0 0.3rem;
+  transition: color 0.2s ease;
+}
+
+.editar-btn {
+  color: var(--medium-light);
+}
+
+.editar-btn:hover {
+  color: var(--medium-dark);
+  scale: 1.1;
+}
+
+.eliminar-btn {
+  color: var(--error);
+}
+
+.eliminar-btn:hover {
+  color: #e05454;
+  scale: 1.1;
+}
+
+.info-btn {
+  color: var(--medium);
+}
+
+.info-btn:hover {
+  color: var(--medium-dark);
+  scale: 1.1;
+}
+
+/* Modal general */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 10px;
+  width: 400px;
+  max-width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.modal::-webkit-scrollbar {
+  display: none;
+}
+
+.modal h3 {
+  margin-top: 0;
+  text-align: center;
+  color: var(--dark);
+}
+
+.modal input,
+.modal select {
+  width: 100%;
+  margin-bottom: 1rem;
+  padding: 0.6rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.modal textarea {
+  width: 100%;
+  margin-bottom: 1rem;
+  padding: 0.6rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+  resize: vertical;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.modal-actions button {
+  padding: 0.5rem 1.2rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.modal-actions button:first-child {
+  background-color: var(--medium);
+  color: white;
+}
+
+.modal-actions button:last-child {
+  background-color: var(--error);
+  color: white;
+}
+
+.busqueda {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.busqueda input {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+  width: 250px;  
+  background-color: var(--medium-light);
+  color: white;
+}
+
+.busqueda input::placeholder{
+  color: rgb(255, 239, 239);
+}
+
+.modal-img {
+  width: 100%;
+  max-height: 250px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.edad-container {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.edad-container input,
+.edad-container select {
+  flex: 1;
+  padding: 0.5rem;
+  font-size: 1rem;
+}
+
+.modal-info {
+  padding: 0rem 1rem 1rem 1rem;
+  background-color: white;
+  border-radius: 10px;
+  width: 400px;
+  max-width: 90%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.modal-info .modal-header {
+  position: sticky;
+  top: 0;
+  background: white;
+  padding: 1rem 2.5rem 1rem 1rem;
+  text-align: center;
+  z-index: 10;
+}
+
+.modal-info .modal-header h3 {
+  margin: 0 auto;
+  font-size: 1.5rem;
+}
+
+.cerrar-modal {
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 1.6rem;
+  color: var(--error);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+}
+
+.cerrar-modal:hover {
+  color: #e05454;
+}
+
+.modal-info .modal-scroll {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 1rem;
+  padding-top: 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.modal-info .modal-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.modal-info p {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  margin-bottom: 0.5rem;
+}
+
+.info-linea {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+
+.info-linea svg {
+  font-size: 1.5rem;
+  color: var(--medium);
+}
+
+.barra {
+  color: var(--medium-dark);
+  font-weight: bold;
+}
+
+.busqueda {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.busqueda .input-transicion {
+  width: 0;
+  opacity: 0;
+  padding: 0.5rem 0.8rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: width 0.3s ease, opacity 0.3s ease, margin-left 0.3s ease;
+  overflow: hidden;
+  margin-left: 0;
+}
+
+
+.busqueda.activa .input-transicion {
+  width: 250px;
+  opacity: 1;
+  margin-left: 0.8rem;
+}
+
+.lupa-btn {
+  background-color: var(--medium-light);
+  border: none;
+  border-radius: 6px;
+  padding: 0.38rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lupa-btn:hover {
+  background-color: var(--medium-dark);
+}
