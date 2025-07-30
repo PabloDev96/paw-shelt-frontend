@@ -1,31 +1,42 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import "./styles/Dashboard.css";
 import { LuDog } from "react-icons/lu";
 import { IoCalendarOutline } from "react-icons/io5";
 import { MdEuro } from "react-icons/md";
 import { MdPersonAdd } from "react-icons/md";
+import { Tooltip } from 'react-tooltip';
+import { IoLogOutOutline } from "react-icons/io5";
 
 export default function Dashboard() {
   const navigate = useNavigate();
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    navigate("/");
+  };
+
   return (
-    <div className="dashboard-container">
-      <h2>Panel Principal</h2>
-      <div className="button-grid">
-        <button onClick={() => navigate("/animales")}>
-          <LuDog className="icon" />
+    <div className="dashboard-layout">
+      <header className="dashboard-header">
+        <div className="logo">
+          <img src="/logo/pawshelt.png" alt="Pawshelt" />
+        </div>
+        <nav className="dashboard-nav">
+          <NavLink to="/animales" data-tooltip-id="tooltip" data-tooltip-content="Animales"><LuDog /></NavLink>
+          <NavLink to="/citas" data-tooltip-id="tooltip" data-tooltip-content="Citas"><IoCalendarOutline /></NavLink>
+          <NavLink to="/finanzas" data-tooltip-id="tooltip" data-tooltip-content="Finanzas"><MdEuro /></NavLink>
+          <NavLink to="/crear-usuario" data-tooltip-id="tooltip" data-tooltip-content="Crear usuario"><MdPersonAdd /></NavLink>
+        </nav>
+        <button className="logout-icon-btn"  data-tooltip-id="menu-tip" data-tooltip-content="Cerrar sesión" onClick={handleLogout}>
+          <IoLogOutOutline />
         </button>
-        <button onClick={() => navigate("/citas")}>
-          <IoCalendarOutline className="icon" />
-        </button>
-        <button onClick={() => navigate("/finanzas")}>
-          <MdEuro className="icon" />
-        </button>
-        <button onClick={() => navigate("/crear-usuario")}>
-          <MdPersonAdd className="icon" />
-        </button>
-      </div>
+      </header>
+
+      <main className="dashboard-content">
+        <Outlet />
+      </main>
+      <Tooltip id="tooltip" place="top" />
     </div>
   );
 }
