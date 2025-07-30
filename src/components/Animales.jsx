@@ -6,7 +6,7 @@ import { FaCircleInfo } from "react-icons/fa6";
 import { IoClose } from "react-icons/io5";
 import { FaDog, FaCat } from "react-icons/fa";
 import { FaPlus } from "react-icons/fa";
-
+import { Tooltip } from 'react-tooltip';
 
 const formatearEnum = (valor) => {
     if (!valor) return "";
@@ -209,41 +209,41 @@ export default function Animales() {
             {error && <p className="error">{error}</p>}
 
             <div className="filtros">
-                <button onClick={() => fetchAnimales()}>
+                <button onClick={() => fetchAnimales()} data-tooltip-id="tooltip" data-tooltip-content="Mostrar todos">
                     <img src="/icons/shelt.png" alt="Todos" className="icono-btn" />
                 </button>
-                <button onClick={() => fetchAnimales("PERRO")}>
+                <button onClick={() => fetchAnimales("PERRO")} data-tooltip-id="tooltip" data-tooltip-content="Mostrar perros">
                     <img src="/icons/dog.png" alt="Perros" className="icono-btn" />
                 </button>
-                <button onClick={() => fetchAnimales("GATO")}>
+                <button onClick={() => fetchAnimales("GATO")} data-tooltip-id="tooltip" data-tooltip-content="Mostrar gatos">
                     <img src="/icons/cat.png" alt="Gatos" className="icono-btn" />
                 </button>
             </div>
 
             <div className={`busqueda ${mostrarBusqueda ? "activa" : ""}`}>
-    {!mostrarBusqueda && (
-        <button onClick={() => setMostrarBusqueda(true)} className="lupa-btn">
-            <img src="/icons/search.png" alt="Buscar" className="icono-btn" />
-        </button>
-    )}
-    {mostrarBusqueda && (
-        <input
-            type="text"
-            placeholder="Buscar por nombre o raza"
-            value={busqueda}
-            autoFocus
-            onChange={(e) => setBusqueda(e.target.value)}
-            onBlur={() => {
-                if (!busqueda) setMostrarBusqueda(false);
-            }}
-        />
-    )}
-</div>
-
+                {!mostrarBusqueda && (
+                    <button onClick={() => setMostrarBusqueda(true)} className="lupa-btn" data-tooltip-id="tooltip" data-tooltip-content="Buscar por nombre o raza">
+                        <img src="/icons/search.png" alt="Buscar" className="icono-btn" />
+                    </button>
+                )}
+                {mostrarBusqueda && (
+                    <input
+                        type="text"
+                        placeholder="Buscar por nombre o raza"
+                        value={busqueda}
+                        autoFocus
+                        onChange={(e) => setBusqueda(e.target.value)}
+                        onBlur={() => {
+                            if (!busqueda) setMostrarBusqueda(false);
+                        }}
+                    />
+                )}
+            </div>
 
             <div className="acciones">
-                <button className="añadir-btn" onClick={abrirModalCrear}>
-                    <FaPlus /><img src="/icons/pets.png" alt="Añadir" className="icono-btn" />
+                <button className="añadir-btn" onClick={abrirModalCrear} data-tooltip-id="tooltip" data-tooltip-content="Añadir nuevo animal">
+                    <FaPlus />
+                    <img src="/icons/pets.png" alt="Añadir" className="icono-btn" />
                 </button>
             </div>
 
@@ -254,13 +254,13 @@ export default function Animales() {
                         <div className="animal-info">
                             <h3>{animal.nombre}</h3>
                             <p>{animal.raza}</p>
-                            <button className="icon-btn info-btn" onClick={() => verDetallesAnimal(animal)}>
+                            <button className="icon-btn info-btn" onClick={() => verDetallesAnimal(animal)} data-tooltip-id="tooltip" data-tooltip-content="Ver detalles">
                                 <FaCircleInfo />
                             </button>
-                            <button className="icon-btn editar-btn" onClick={() => abrirModalEditar(animal)}>
+                            <button className="icon-btn editar-btn" onClick={() => abrirModalEditar(animal)} data-tooltip-id="tooltip" data-tooltip-content="Editar">
                                 <FaPencilAlt />
                             </button>
-                            <button className="icon-btn eliminar-btn" onClick={() => eliminarAnimal(animal.id)}>
+                            <button className="icon-btn eliminar-btn" onClick={() => eliminarAnimal(animal.id)} data-tooltip-id="tooltip" data-tooltip-content="Eliminar">
                                 <FaTrashAlt />
                             </button>
                         </div>
@@ -369,6 +369,7 @@ export default function Animales() {
                     </div>
                 </div>
             )}
+            <Tooltip id="tooltip" place="top" />
         </div>
     );
 }
