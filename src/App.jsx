@@ -2,11 +2,11 @@ import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import './App.css';
 
+import RutaProtegida from "./components/RutaProtegida";
 import Login from "./components/Login";
-import Dashboard from "./components/Dashboard"; // ahora es layout
+import Dashboard from "./components/Dashboard";
 import Animales from "./components/Animales";
 import CrearUsuario from "./components/CrearUsuario";
-// puedes importar más secciones aquí si las agregas
 
 function App() {
   return (
@@ -15,12 +15,20 @@ function App() {
         {/* Ruta pública */}
         <Route path="/" element={<Login />} />
 
-        {/* Dashboard layout con contenido anidado */}
+        {/* Dashboard layout con rutas protegidas */}
         <Route element={<Dashboard />}>
           <Route path="/panel" element={<div></div>} />
           <Route path="/animales" element={<Animales />} />
-          <Route path="/crear-usuario" element={<CrearUsuario />} />
-          {/* Aquí pondré futiras rutas como /citas, /finanzas, etc. */}
+
+          {/* Solo ADMIN puede acceder */}
+          <Route
+            path="/crear-usuario"
+            element={
+              <RutaProtegida rolRequerido="ADMIN">
+                <CrearUsuario />
+              </RutaProtegida>
+            }
+          />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -31,8 +31,18 @@ export default function Dashboard() {
         <nav className="dashboard-nav">
           <NavLink to="/animales" data-tooltip-id="tooltip" data-tooltip-content="Animales"><LuDog /></NavLink>
           <NavLink to="/citas" data-tooltip-id="tooltip" data-tooltip-content="Citas"><IoCalendarOutline /></NavLink>
-          <NavLink to="/finanzas" data-tooltip-id="tooltip" data-tooltip-content="Finanzas"><MdEuro /></NavLink>
-          <NavLink to="/crear-usuario" data-tooltip-id="tooltip" data-tooltip-content="Crear usuario"><MdPersonAdd /></NavLink>
+          
+          {/* SOLO ADMIN puede ver estos dos */}
+          {user?.rol === "ADMIN" && (
+            <>
+              <NavLink to="/finanzas" data-tooltip-id="tooltip" data-tooltip-content="Finanzas">
+                <MdEuro />
+              </NavLink>
+              <NavLink to="/crear-usuario" data-tooltip-id="tooltip" data-tooltip-content="Crear usuario">
+                <MdPersonAdd />
+              </NavLink>
+            </>
+          )}
         </nav>
 
         <button className="logout-icon-btn" data-tooltip-id="menu-tip" data-tooltip-content="Cerrar sesión" onClick={handleLogout}>
