@@ -10,8 +10,7 @@
   justify-content: space-between;
   background-color: var(--medium-dark);
   padding: 1rem 2rem;
-  color: white;
-}
+} 
 
 .dashboard-header .logo img {
   height: 60px;
@@ -79,6 +78,25 @@
 .nav-icon {
   cursor: pointer;
 }
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 1rem; /* agrega espacio entre logo y usuario */
+}
+
+.usuario-info {
+  display: flex;
+  flex-direction: column;
+  color: white;
+  font-size: 0.9rem;
+}
+
+.usuario-info .rol {
+  color: var(--medium-light);
+  font-size: 0.75rem;
+}
+
 
 /* Responsive */
 @media (max-width: 600px) {

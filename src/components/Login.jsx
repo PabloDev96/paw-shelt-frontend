@@ -59,7 +59,13 @@ export default function Login() {
       }
 
       const data = await response.json();
+
       localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify({
+        nombre: data.nombre,
+        rol: data.rol
+      }));
+
 
       await showSuccess("¡Login exitoso!", "Bienvenido a tu panel de gestión.", 2000);
       navigate("/panel");
