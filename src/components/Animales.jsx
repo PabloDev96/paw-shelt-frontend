@@ -129,50 +129,50 @@ export default function Animales() {
     };
 
     const handleGuardarAnimal = async (e) => {
-  e.preventDefault();
+        e.preventDefault();
 
-  const token = localStorage.getItem("token");
-  const url = modoEdicion
-    ? `http://localhost:8080/animales/${animalEditandoId}`
-    : `http://localhost:8080/animales`;
+        const token = localStorage.getItem("token");
+        const url = modoEdicion
+            ? `http://localhost:8080/animales/${animalEditandoId}`
+            : `http://localhost:8080/animales`;
 
-  const method = modoEdicion ? "PUT" : "POST";
+        const method = modoEdicion ? "PUT" : "POST";
 
-  try {
-    const response = await fetch(url, {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(nuevoAnimal),
-    });
+        try {
+            const response = await fetch(url, {
+                method,
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(nuevoAnimal),
+            });
 
-    if (!response.ok) {
-      throw new Error("Error al guardar el animal");
-    }
+            if (!response.ok) {
+                throw new Error("Error al guardar el animal");
+            }
 
-    const actualizado = await response.json();
+            const actualizado = await response.json();
 
-    if (modoEdicion) {
-      setAnimales((prev) =>
-        prev.map((a) => (a.id === animalEditandoId ? actualizado : a))
-      );
-      showSuccess("Animal actualizado", `${actualizado.nombre} fue editado correctamente.`);
-    } else {
-      setAnimales((prev) => [...prev, actualizado]);
-      showSuccess("Animal creado", `${actualizado.nombre} fue añadido correctamente.`);
-    }
+            if (modoEdicion) {
+                setAnimales((prev) =>
+                    prev.map((a) => (a.id === animalEditandoId ? actualizado : a))
+                );
+                showSuccess("Animal actualizado", `${actualizado.nombre} fue editado correctamente.`);
+            } else {
+                setAnimales((prev) => [...prev, actualizado]);
+                showSuccess("Animal creado", `${actualizado.nombre} fue añadido correctamente.`);
+            }
 
-    setMostrarModal(false);
-    setModoEdicion(false);
-    setAnimalEditandoId(null);
+            setMostrarModal(false);
+            setModoEdicion(false);
+            setAnimalEditandoId(null);
 
-  } catch (err) {
-    console.error(err);
-    showError("Error al guardar", "No se pudo guardar el animal.");
-  }
-};
+        } catch (err) {
+            console.error(err);
+            showError("Error al guardar", "No se pudo guardar el animal.");
+        }
+    };
 
 
     const eliminarAnimal = async (id) => {
@@ -203,17 +203,41 @@ export default function Animales() {
 
     const animalesFiltrados = animales.filter((animal) => {
         const termino = busqueda.toLowerCase();
+
+        const estadoNormalizado = formatearEnum(animal.estado).toLowerCase();
+
         return (
             animal.nombre.toLowerCase().includes(termino) ||
-            animal.raza.toLowerCase().includes(termino)
+            animal.raza.toLowerCase().includes(termino) ||
+            estadoNormalizado.includes(termino)
         );
     });
 
+
     return (
         <div className="animales-container">
-            <h2>Animales del refugio</h2>
-
             {error && <p className="error">{error}</p>}
+
+            <div className={`busqueda ${mostrarBusqueda ? "activa" : ""}`}>
+                {!mostrarBusqueda && (
+                    <button onClick={() => setMostrarBusqueda(true)} className="lupa-btn" data-tooltip-id="tooltip" data-tooltip-content="Buscar por nombre, raza o estado">
+                        <img src="/icons/search.png" alt="Buscar" className="icono-btn" />
+                    </button>
+                )}
+                {mostrarBusqueda && (
+                    <input
+                        type="text"
+                        placeholder="Buscar animales..."
+                        value={busqueda}
+                        autoFocus
+                        onChange={(e) => setBusqueda(e.target.value)}
+                        onBlur={() => {
+                            if (!busqueda) setMostrarBusqueda(false);
+                        }}
+                    />
+                )}
+            </div>
+
 
             <div className="filtros">
                 <button onClick={() => fetchAnimales()} data-tooltip-id="tooltip" data-tooltip-content="Mostrar todos">
@@ -225,26 +249,6 @@ export default function Animales() {
                 <button onClick={() => fetchAnimales("GATO")} data-tooltip-id="tooltip" data-tooltip-content="Mostrar gatos">
                     <img src="/icons/cat.png" alt="Gatos" className="icono-btn" />
                 </button>
-            </div>
-
-            <div className={`busqueda ${mostrarBusqueda ? "activa" : ""}`}>
-                {!mostrarBusqueda && (
-                    <button onClick={() => setMostrarBusqueda(true)} className="lupa-btn" data-tooltip-id="tooltip" data-tooltip-content="Buscar por nombre o raza">
-                        <img src="/icons/search.png" alt="Buscar" className="icono-btn" />
-                    </button>
-                )}
-                {mostrarBusqueda && (
-                    <input
-                        type="text"
-                        placeholder="Buscar por nombre o raza"
-                        value={busqueda}
-                        autoFocus
-                        onChange={(e) => setBusqueda(e.target.value)}
-                        onBlur={() => {
-                            if (!busqueda) setMostrarBusqueda(false);
-                        }}
-                    />
-                )}
             </div>
 
             <div className="acciones">
@@ -347,7 +351,15 @@ export default function Animales() {
             )}
 
             {mostrarModalInfo && animalDetalle && (
-                <div className="modal-overlay">
+                <div
+                    className="modal-overlay"
+                    onClick={(e) => {
+                        // Cierra solo si se hace clic directamente sobre el fondo, no dentro del modal
+                        if (e.target.classList.contains("modal-overlay")) {
+                            setMostrarModalInfo(false);
+                        }
+                    }}
+                >
                     <div className="modal modal-info">
                         <div className="modal-header">
                             <h3>{animalDetalle.nombre}</h3>

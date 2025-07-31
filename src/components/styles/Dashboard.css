@@ -17,15 +17,47 @@
   height: 60px;
 }
 
+.dashboard-nav {
+  display: flex;
+  gap: 3.5rem;
+  align-items: center;
+}
+
 .dashboard-nav a {
-  margin: 0 1rem;
-  text-decoration: none;
-  color: white;
-  font-weight: bold;
+  color: var(--medium-light);
+  font-size: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+  padding: 0;
+  line-height: 1;
+}
+
+.dashboard-nav a:hover {
+  transform: scale(1.2);
 }
 
 .dashboard-nav a.active {
   text-decoration: underline;
+}
+
+.logout-icon-btn {
+  background: none;
+  border: none;
+  color: var(--error);
+  font-size: 2.5rem; /* igual que los íconos del nav */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  padding: 0;
+  line-height: 1;
+}
+
+.logout-icon-btn:hover {
+  color: #d94c4c;
 }
 
 .logout-btn {
@@ -44,38 +76,30 @@
   overflow-y: auto;
 }
 
-.dashboard-nav {
-  display: flex;
-  gap: 1.5rem;
-  align-items: center;
-}
-
-.dashboard-nav a {
-  color: white;
-  font-size: 1.8rem;
-  display: flex;
-  align-items: center;
-  transition: transform 0.2s ease;
-}
-
-.dashboard-nav a:hover {
-  transform: scale(1.2);
-}
-
 .nav-icon {
   cursor: pointer;
 }
 
-.logout-icon-btn {
-  background: none;
-  border: none;
-  color: var(--error); /* el icono será rojo */
-  font-size: 1.8rem;
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
+/* Responsive */
+@media (max-width: 600px) {
+  .dashboard-header {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: center;
+  }
 
-.logout-icon-btn:hover {
-  color: #d94c4c; /* un rojo más oscuro */
-}
+  .dashboard-nav {
+    gap: 1.5rem;
+  }
 
+  .dashboard-nav a,
+  .logout-icon-btn {
+    font-size: 1.4rem;
+    height: 2rem;
+  }
+
+  .logo img {
+    height: 40px;
+  }
+}

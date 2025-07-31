@@ -16,7 +16,7 @@ function App() {
 
         {/* Dashboard layout con contenido anidado */}
         <Route element={<Dashboard />}>
-          <Route path="/panel" element={<div>Bienvenido a Pawshelt 🐾</div>} />
+          <Route path="/panel" element={<div></div>} />
           <Route path="/animales" element={<Animales />} />
           {/* Aquí pondré futiras rutas como /citas, /finanzas, etc. */}
         </Route>

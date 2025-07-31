@@ -21,7 +21,7 @@ export default function Login() {
       imageWidth: 120,
       imageAlt: "Logo de Pawshelt",
       showConfirmButton: false,
-      timer: 2000,
+      timer: 1500,
       background: "var(--light)",
       color: "var(--dark)",
       customClass: {
