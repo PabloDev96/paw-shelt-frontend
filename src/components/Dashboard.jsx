@@ -8,7 +8,6 @@ import { Tooltip } from 'react-tooltip';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-
   const user = JSON.parse(localStorage.getItem("user"));
 
   const handleLogout = () => {
@@ -20,19 +19,25 @@ export default function Dashboard() {
   return (
     <div className="dashboard-layout">
       <header className="dashboard-header">
-        <div className="logo">
-          <img src="/logo/pawshelt.png" alt="Pawshelt" />
-          <div className="usuario-info">
-            <span>{user?.nombre}</span>
-            <span className="rol">{user?.rol}</span>
+
+        <div className="header-left">
+          <div className="logo">
+            <img src="/logo/pawshelt.png" alt="Pawshelt" />
+            <div className="usuario-info">
+              <span>{user?.nombre}</span>
+              <span className="rol">{user?.rol}</span>
+            </div>
           </div>
         </div>
 
-        <nav className="dashboard-nav">
-          <NavLink to="/animales" data-tooltip-id="tooltip" data-tooltip-content="Animales"><LuDog /></NavLink>
-          <NavLink to="/citas" data-tooltip-id="tooltip" data-tooltip-content="Citas"><IoCalendarOutline /></NavLink>
-          
-          {/* SOLO ADMIN puede ver estos dos */}
+        <nav className="header-center dashboard-nav">
+          <NavLink to="/animales" data-tooltip-id="tooltip" data-tooltip-content="Animales">
+            <LuDog />
+          </NavLink>
+          <NavLink to="/citas" data-tooltip-id="tooltip" data-tooltip-content="Citas">
+            <IoCalendarOutline />
+          </NavLink>
+
           {user?.rol === "ADMIN" && (
             <>
               <NavLink to="/finanzas" data-tooltip-id="tooltip" data-tooltip-content="Finanzas">
@@ -45,15 +50,26 @@ export default function Dashboard() {
           )}
         </nav>
 
-        <button className="logout-icon-btn" data-tooltip-id="menu-tip" data-tooltip-content="Cerrar sesión" onClick={handleLogout}>
-          <IoLogOutOutline />
-        </button>
+        <div className="header-right">
+          <button
+            className="logout-icon-btn"
+            data-tooltip-id="menu-tip"
+            data-tooltip-content="Cerrar sesión"
+            onClick={handleLogout}
+          >
+            <IoLogOutOutline />
+          </button>
+        </div>
+
       </header>
 
       <main className="dashboard-content">
         <Outlet />
       </main>
+
       <Tooltip id="tooltip" place="top" />
+      <Tooltip id="menu-tip" place="left" />
+      
     </div>
   );
 }

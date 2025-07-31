@@ -10,13 +10,20 @@
   justify-content: space-between;
   background-color: var(--medium-dark);
   padding: 1rem 2rem;
-} 
-
-.dashboard-header .logo img {
-  height: 60px;
+  position: relative;
 }
 
-.dashboard-nav {
+.header-left,
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   gap: 3.5rem;
   align-items: center;
@@ -45,7 +52,7 @@
   background: none;
   border: none;
   color: var(--error);
-  font-size: 2.5rem; /* igual que los íconos del nav */
+  font-size: 2.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -82,7 +89,11 @@
 .logo {
   display: flex;
   align-items: center;
-  gap: 1rem; /* agrega espacio entre logo y usuario */
+  gap: 1rem;
+}
+
+.logo img {
+  height: 70px;
 }
 
 .usuario-info {
@@ -97,7 +108,6 @@
   font-size: 0.75rem;
 }
 
-
 /* Responsive */
 @media (max-width: 600px) {
   .dashboard-header {
@@ -107,8 +117,12 @@
     align-items: center;
   }
 
-  .dashboard-nav {
-    gap: 1.5rem;
+  .header-center {
+    position: static;
+    transform: none;
+    justify-content: center;
+    gap: 1rem;
+    margin: 1rem 0;
   }
 
   .dashboard-nav a,
@@ -119,5 +133,28 @@
 
   .logo img {
     height: 40px;
+  }
+}
+
+@media (max-width: 400px) {
+  .header-center {
+    gap: 1rem;
+  }
+
+  .dashboard-nav a,
+  .logout-icon-btn {
+    font-size: 1.2rem;
+  }
+
+  .logo img {
+    height: 32px;
+  }
+
+  .usuario-info {
+    font-size: 0.75rem;
+  }
+
+  .usuario-info .rol {
+    font-size: 0.65rem;
   }
 }
