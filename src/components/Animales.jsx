@@ -1,17 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import "./styles/Animales.css";
 import { showSuccess, showError, showConfirm } from "../utils/alerts";
 import { useNavigate } from "react-router-dom";
-import { FaPencilAlt, FaTrashAlt } from "react-icons/fa";
+import { FaPencilAlt, FaTrashAlt, FaDog, FaCat, FaPlus } from "react-icons/fa";
 import { FaCircleInfo } from "react-icons/fa6";
 import { IoClose } from "react-icons/io5";
-import { FaDog, FaCat } from "react-icons/fa";
-import { FaPlus } from "react-icons/fa";
-import { Tooltip } from 'react-tooltip';
+import { MdMale, MdFemale } from "react-icons/md";
+import { Tooltip } from "react-tooltip";
 
 const formatearEnum = (valor) => {
-    if (!valor) return "";
-
     const reemplazos = {
         ANIOS: "Años",
         MESES: "Meses",
@@ -19,15 +16,9 @@ const formatearEnum = (valor) => {
         GATO: "Gato",
         ADOPTADO: "Adoptado",
         EN_ADOPCION: "En adopción",
-        EN_CASA_DE_ACOGIDA: "En casa de acogida"
+        EN_CASA_DE_ACOGIDA: "En casa de acogida",
     };
-
-    return reemplazos[valor] || (
-        valor
-            .toLowerCase()
-            .replace(/_/g, " ")
-            .replace(/^\w/, (c) => c.toUpperCase())
-    );
+    return reemplazos[valor] || valor;
 };
 
 export default function Animales() {
@@ -35,7 +26,6 @@ export default function Animales() {
     const [error, setError] = useState("");
     const [mostrarModal, setMostrarModal] = useState(false);
     const [mostrarBusqueda, setMostrarBusqueda] = useState(false);
-
     const [animalDetalle, setAnimalDetalle] = useState(null);
     const [mostrarModalInfo, setMostrarModalInfo] = useState(false);
     const [busqueda, setBusqueda] = useState("");
@@ -47,10 +37,22 @@ export default function Animales() {
         edadCantidad: "",
         unidadEdad: "ANIOS",
         tipo: "PERRO",
+        sexo: "MACHO",
         descripcion: "",
         estado: "EN_ADOPCION",
-        fotoPerfilUrl: ""
+        fotoPerfilUrl: "",
     });
+
+    const [filtroPrincipal, setFiltroPrincipal] = useState("TODOS");
+    const [filtrosSecundarios, setFiltrosSecundarios] = useState({
+        sexo: null,
+        etapa: null,
+    });
+    const filtroRef = useRef(null);
+    const [subfiltroPos, setSubfiltroPos] = useState({ left: 0 });
+    const [subfiltrosVisibles, setSubfiltrosVisibles] = useState(false);
+
+
 
     const navigate = useNavigate();
 
@@ -62,39 +64,55 @@ export default function Animales() {
         try {
             const token = localStorage.getItem("token");
             if (!token) {
-                setError("No hay token. Inicia sesión de nuevo.");
                 navigate("/");
                 return;
             }
 
-            const endpoint = tipo
+            const endpoint = tipo && tipo !== "TODOS"
                 ? `http://localhost:8080/animales/tipo/${tipo}`
                 : `http://localhost:8080/animales`;
 
             const response = await fetch(endpoint, {
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
+                headers: { Authorization: `Bearer ${token}` },
             });
 
-            if (response.status === 401 || response.status === 403) {
-                setError("No autorizado. Inicia sesión de nuevo.");
-                navigate("/");
-                return;
-            }
-
-            if (!response.ok) {
-                throw new Error("Error al obtener los animales");
-            }
-
+            if (!response.ok) throw new Error("Error al obtener animales");
             const data = await response.json();
             setAnimales(data);
-            setError("");
         } catch (err) {
-            console.error("Error:", err);
+            console.error(err);
             setError("No se pudieron cargar los animales.");
         }
+    };
+
+    const handleClickFiltro = (tipo, ref) => {
+        if (filtroPrincipal === tipo) {
+            // Ocultar si ya está seleccionado
+            setSubfiltrosVisibles(false);
+            setFiltroPrincipal(null);
+            setFiltrosSecundarios({ sexo: null, etapa: null });
+            fetchAnimales();
+            return;
+        }
+
+        // Mostrar subfiltros ANTES de cambiar filtroPrincipal
+        setSubfiltrosVisibles(true);
+        setFiltroPrincipal(tipo);
+        setFiltrosSecundarios({ sexo: null, etapa: null });
+        fetchAnimales(tipo);
+
+        if (ref && ref.current) {
+            const rect = ref.current.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const containerRect = filtroRef.current?.getBoundingClientRect();
+            const offsetLeft = containerRect ? centerX - containerRect.left : 0;
+            setSubfiltroPos({ left: offsetLeft });
+        }
+    };
+
+
+    const handleFiltroSecundario = (tipo, valor) => {
+        setFiltrosSecundarios((prev) => ({ ...prev, [tipo]: valor }));
     };
 
     const actualizarCampo = (campo, valor) => {
@@ -109,8 +127,9 @@ export default function Animales() {
             unidadEdad: "ANIOS",
             descripcion: "",
             tipo: "PERRO",
+            sexo: "MACHO",
             estado: "EN_ADOPCION",
-            fotoPerfilUrl: ""
+            fotoPerfilUrl: "",
         });
         setModoEdicion(false);
         setMostrarModal(true);
@@ -174,38 +193,50 @@ export default function Animales() {
         }
     };
 
-
     const eliminarAnimal = async (id) => {
-        const confirmacion = await showConfirm("¿Eliminar animal?", "Esta acción no se puede deshacer.");
-
+        const confirmacion = await showConfirm("Eliminar", "Esta acción no se puede deshacer.");
         if (!confirmacion.isConfirmed) return;
 
         try {
             const token = localStorage.getItem("token");
             const response = await fetch(`http://localhost:8080/animales/${id}`, {
                 method: "DELETE",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             if (response.ok) {
                 setAnimales(animales.filter((a) => a.id !== id));
-                showSuccess("Animal eliminado", "La ficha fue eliminada correctamente.");
+                showSuccess("Eliminado", "Animal eliminado correctamente.");
             } else {
-                showError("Error", "No se pudo eliminar el animal.");
+                showError("Error", "No se pudo eliminar.");
             }
         } catch (err) {
-            console.error(err);
-            showError("Error de conexión", "No se pudo contactar al servidor.");
+            showError("Error", "Error de conexión");
         }
     };
 
+
+
     const animalesFiltrados = animales.filter((animal) => {
         const termino = busqueda.toLowerCase();
-
         const estadoNormalizado = formatearEnum(animal.estado).toLowerCase();
 
+        // Filtrar por sexo
+        if (filtrosSecundarios.sexo && animal.sexo !== filtrosSecundarios.sexo) return false;
+
+        // Filtrar por etapa (edad)
+        const edad = animal.edadCantidad;
+        const unidad = animal.unidadEdad;
+
+        if (filtrosSecundarios.etapa === "CACHORRO") {
+            if (!(unidad === "MESES" || (unidad === "ANIOS" && edad <= 1))) return false;
+        } else if (filtrosSecundarios.etapa === "ADULTO") {
+            if (!(unidad === "ANIOS" && edad >= 2 && edad <= 8)) return false;
+        } else if (filtrosSecundarios.etapa === "ANCIANO") {
+            if (!(unidad === "ANIOS" && edad >= 9)) return false;
+        }
+
+        // Búsqueda por texto
         return (
             animal.nombre.toLowerCase().includes(termino) ||
             animal.raza.toLowerCase().includes(termino) ||
@@ -213,14 +244,18 @@ export default function Animales() {
         );
     });
 
-
     return (
         <div className="animales-container">
             {error && <p className="error">{error}</p>}
 
             <div className={`busqueda ${mostrarBusqueda ? "activa" : ""}`}>
                 {!mostrarBusqueda && (
-                    <button onClick={() => setMostrarBusqueda(true)} className="lupa-btn" data-tooltip-id="tooltip" data-tooltip-content="Buscar por nombre, raza o estado">
+                    <button
+                        onClick={() => setMostrarBusqueda(true)}
+                        className="lupa-btn"
+                        data-tooltip-id="tooltip"
+                        data-tooltip-content="Buscar por nombre, raza o estado"
+                    >
                         <img src="/icons/search.png" alt="Buscar" className="icono-btn" />
                     </button>
                 )}
@@ -231,28 +266,102 @@ export default function Animales() {
                         value={busqueda}
                         autoFocus
                         onChange={(e) => setBusqueda(e.target.value)}
-                        onBlur={() => {
-                            if (!busqueda) setMostrarBusqueda(false);
-                        }}
+                        onBlur={() => !busqueda && setMostrarBusqueda(false)}
                     />
                 )}
             </div>
 
+            <div className="filtros" ref={filtroRef}>
+                {["TODOS", "PERRO", "GATO"].map((tipo) => {
+                    const icon =
+                        tipo === "PERRO"
+                            ? "/icons/dog.png"
+                            : tipo === "GATO"
+                                ? "/icons/cat.png"
+                                : "/icons/shelt.png";
 
-            <div className="filtros">
-                <button onClick={() => fetchAnimales()} data-tooltip-id="tooltip" data-tooltip-content="Mostrar todos">
-                    <img src="/icons/shelt.png" alt="Todos" className="icono-btn" />
-                </button>
-                <button onClick={() => fetchAnimales("PERRO")} data-tooltip-id="tooltip" data-tooltip-content="Mostrar perros">
-                    <img src="/icons/dog.png" alt="Perros" className="icono-btn" />
-                </button>
-                <button onClick={() => fetchAnimales("GATO")} data-tooltip-id="tooltip" data-tooltip-content="Mostrar gatos">
-                    <img src="/icons/cat.png" alt="Gatos" className="icono-btn" />
-                </button>
+                    const btnRef = useRef(null);
+
+                    return (
+                        <button
+                            key={tipo}
+                            ref={btnRef}
+                            onClick={() => handleClickFiltro(tipo, btnRef)}
+                            className={
+                                (!filtroPrincipal && tipo === "TODOS") || filtroPrincipal === tipo
+                                    ? "activo"
+                                    : ""
+                            }
+                            data-tooltip-id="tooltip"
+                            data-tooltip-content={
+                                tipo === "PERRO"
+                                    ? "Mostrar perros"
+                                    : tipo === "GATO"
+                                        ? "Mostrar gatos"
+                                        : "Mostrar todos"
+                            }
+                        >
+                            <img src={icon} alt={tipo} className="icono-btn" />
+                        </button>
+                    );
+                })}
             </div>
 
+            {filtroPrincipal && subfiltrosVisibles && (
+                <div className="subfiltros-container" style={{ position: "relative" }}>
+                    <div
+                        className="subfiltros-box"
+                        style={{
+                            position: "absolute",
+                            top: "100%",
+                            left: `${subfiltroPos.left}px`,
+                            transform: "translateX(-50%)",
+                        }}
+                    >
+                        <div className="flecha-subfiltros" />
+                        <div className="subfiltros">
+                            <button
+                                onClick={() => handleFiltroSecundario("sexo", "MACHO")}
+                                className={filtrosSecundarios.sexo === "MACHO" ? "activo" : ""}
+                            >
+                                <MdMale />
+                            </button>
+                            <button
+                                onClick={() => handleFiltroSecundario("sexo", "HEMBRA")}
+                                className={filtrosSecundarios.sexo === "HEMBRA" ? "activo" : ""}
+                            >
+                                <MdFemale />
+                            </button>
+                            <button
+                                onClick={() => handleFiltroSecundario("etapa", "CACHORRO")}
+                                className={filtrosSecundarios.etapa === "CACHORRO" ? "activo" : ""}
+                            >
+                                Cachorro
+                            </button>
+                            <button
+                                onClick={() => handleFiltroSecundario("etapa", "ADULTO")}
+                                className={filtrosSecundarios.etapa === "ADULTO" ? "activo" : ""}
+                            >
+                                Adulto
+                            </button>
+                            <button
+                                onClick={() => handleFiltroSecundario("etapa", "ANCIANO")}
+                                className={filtrosSecundarios.etapa === "ANCIANO" ? "activo" : ""}
+                            >
+                                Anciano
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="acciones">
-                <button className="añadir-btn" onClick={abrirModalCrear} data-tooltip-id="tooltip" data-tooltip-content="Añadir nuevo animal">
+                <button
+                    className="añadir-btn"
+                    onClick={abrirModalCrear}
+                    data-tooltip-id="tooltip"
+                    data-tooltip-content="Añadir nuevo animal"
+                >
                     <FaPlus />
                     <img src="/icons/pets.png" alt="Añadir" className="icono-btn" />
                 </button>
@@ -265,13 +374,28 @@ export default function Animales() {
                         <div className="animal-info">
                             <h3>{animal.nombre}</h3>
                             <p>{animal.raza}</p>
-                            <button className="icon-btn info-btn" onClick={() => verDetallesAnimal(animal)} data-tooltip-id="tooltip" data-tooltip-content="Ver detalles">
+                            <button
+                                className="icon-btn info-btn"
+                                onClick={() => verDetallesAnimal(animal)}
+                                data-tooltip-id="tooltip"
+                                data-tooltip-content="Ver detalles"
+                            >
                                 <FaCircleInfo />
                             </button>
-                            <button className="icon-btn editar-btn" onClick={() => abrirModalEditar(animal)} data-tooltip-id="tooltip" data-tooltip-content="Editar">
+                            <button
+                                className="icon-btn editar-btn"
+                                onClick={() => abrirModalEditar(animal)}
+                                data-tooltip-id="tooltip"
+                                data-tooltip-content="Editar"
+                            >
                                 <FaPencilAlt />
                             </button>
-                            <button className="icon-btn eliminar-btn" onClick={() => eliminarAnimal(animal.id)} data-tooltip-id="tooltip" data-tooltip-content="Eliminar">
+                            <button
+                                className="icon-btn eliminar-btn"
+                                onClick={() => eliminarAnimal(animal.id)}
+                                data-tooltip-id="tooltip"
+                                data-tooltip-content="Eliminar"
+                            >
                                 <FaTrashAlt />
                             </button>
                         </div>
@@ -280,8 +404,8 @@ export default function Animales() {
             </div>
 
             {mostrarModal && (
-                <div className="modal-overlay">
-                    <div className="modal">
+                <div className="modal-overlay" onClick={() => setMostrarModal(false)}>
+                    <div className="modal" onClick={(e) => e.stopPropagation()}>
                         <h3>{modoEdicion ? "Editar Animal" : "Nuevo Animal"}</h3>
                         <form onSubmit={handleGuardarAnimal}>
                             <input
@@ -306,13 +430,35 @@ export default function Animales() {
                                     required
                                 />
                                 <select
-                                    value={nuevoAnimal.unidadEdad || "ANIOS"}
+                                    value={nuevoAnimal.unidadEdad}
                                     onChange={(e) => actualizarCampo("unidadEdad", e.target.value)}
                                 >
                                     <option value="ANIOS">Años</option>
                                     <option value="MESES">Meses</option>
                                 </select>
                             </div>
+                            <select
+                                value={nuevoAnimal.tipo}
+                                onChange={(e) => actualizarCampo("tipo", e.target.value)}
+                            >
+                                <option value="PERRO">Perro</option>
+                                <option value="GATO">Gato</option>
+                            </select>
+                            <select
+                                value={nuevoAnimal.sexo}
+                                onChange={(e) => actualizarCampo("sexo", e.target.value)}
+                            >
+                                <option value="MACHO">Macho</option>
+                                <option value="HEMBRA">Hembra</option>
+                            </select>
+                            <select
+                                value={nuevoAnimal.estado}
+                                onChange={(e) => actualizarCampo("estado", e.target.value)}
+                            >
+                                <option value="EN_ADOPCION">En adopción</option>
+                                <option value="ADOPTADO">Adoptado</option>
+                                <option value="EN_CASA_DE_ACOGIDA">En casa de acogida</option>
+                            </select>
                             <input
                                 type="text"
                                 placeholder="Foto (URL)"
@@ -323,27 +469,12 @@ export default function Animales() {
                                 placeholder="Descripción"
                                 value={nuevoAnimal.descripcion}
                                 onChange={(e) => actualizarCampo("descripcion", e.target.value)}
-                                rows={4}
                             />
-                            <select
-                                value={nuevoAnimal.tipo}
-                                onChange={(e) => actualizarCampo("tipo", e.target.value)}
-                            >
-                                <option value="PERRO">Perro</option>
-                                <option value="GATO">Gato</option>
-                            </select>
-                            <select
-                                value={nuevoAnimal.estado}
-                                onChange={(e) => actualizarCampo("estado", e.target.value)}
-                            >
-                                <option value="EN_ADOPCION">En Adopción</option>
-                                <option value="ADOPTADO">Adoptado</option>
-                                <option value="EN_CASA_DE_ACOGIDA">En casa de acogida</option>
-                            </select>
-
                             <div className="modal-actions">
-                                <button type="submit">{modoEdicion ? "Guardar Cambios" : "Crear"}</button>
-                                <button type="button" onClick={() => setMostrarModal(false)}>Cancelar</button>
+                                <button type="submit">{modoEdicion ? "Guardar cambios" : "Crear"}</button>
+                                <button type="button" onClick={() => setMostrarModal(false)}>
+                                    Cancelar
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -351,15 +482,7 @@ export default function Animales() {
             )}
 
             {mostrarModalInfo && animalDetalle && (
-                <div
-                    className="modal-overlay"
-                    onClick={(e) => {
-                        // Cierra solo si se hace clic directamente sobre el fondo, no dentro del modal
-                        if (e.target.classList.contains("modal-overlay")) {
-                            setMostrarModalInfo(false);
-                        }
-                    }}
-                >
+                <div className="modal-overlay" onClick={() => setMostrarModalInfo(false)}>
                     <div className="modal modal-info">
                         <div className="modal-header">
                             <h3>{animalDetalle.nombre}</h3>
@@ -375,6 +498,7 @@ export default function Animales() {
                             />
                             <div className="info-linea">
                                 {animalDetalle.tipo === "PERRO" ? <FaDog /> : <FaCat />}
+                                {animalDetalle.sexo === "MACHO" ? <MdMale /> : <MdFemale />}
                                 <span className="barra">|</span>
                                 <strong>{animalDetalle.raza}</strong>
                                 <span className="barra">|</span>
@@ -388,6 +512,7 @@ export default function Animales() {
                     </div>
                 </div>
             )}
+
             <Tooltip id="tooltip" place="top" />
         </div>
     );

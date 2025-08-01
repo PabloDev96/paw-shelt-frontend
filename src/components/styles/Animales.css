@@ -60,11 +60,13 @@
 
 /* Botones de filtro */
 .filtros {
+  position: relative;
   display: flex;
+  gap: 12px;
   justify-content: center;
-  gap: 1rem;
-  margin-bottom: 2rem;
+  margin-bottom: 12px;
 }
+
 
 .filtros button {
   background-color: var(--medium-light);
@@ -411,3 +413,52 @@
 .lupa-btn:hover {
   background-color: var(--medium-dark);
 }
+
+.filtro-agrupado {
+  display: inline-block;
+  margin-right: 1rem;
+  text-align: center;
+}
+
+.subfiltros-box {
+  background: #d4e2d4; /* mismo color que los botones filtro activos */
+  border-radius: 12px;
+  padding: 10px 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 20;
+}
+
+.flecha-subfiltros {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid #d4e2d4; /* mismo color de fondo que el subfiltro */
+}
+
+.subfiltros {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.subfiltros button {
+  background: transparent;
+  border: none;
+  font-size: 1rem;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.subfiltros button.activo,
+.subfiltros button:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+

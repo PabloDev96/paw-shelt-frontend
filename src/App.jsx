@@ -6,6 +6,8 @@ import RutaProtegida from "./components/RutaProtegida";
 import Login from "./components/Login";
 import Dashboard from "./components/Dashboard";
 import Animales from "./components/Animales";
+{/*import Citas from "./components/Citas";*/}
+
 import CrearUsuario from "./components/CrearUsuario";
 
 function App() {
@@ -19,7 +21,7 @@ function App() {
         <Route element={<Dashboard />}>
           <Route path="/panel" element={<div></div>} />
           <Route path="/animales" element={<Animales />} />
-
+          {/* <Route path="/citas" element={<Citas />} /> */}
           {/* Solo ADMIN puede acceder */}
           <Route
             path="/crear-usuario"

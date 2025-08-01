@@ -1,0 +1,40 @@
+.rbc-calendar {
+  background-color: var(--light);
+  color: var(--dark);
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.rbc-toolbar {
+  background-color: var(--medium-dark);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  margin-bottom: 1rem;
+}
+
+.rbc-event {
+  background-color: var(--medium-light);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 2px 4px;
+  font-size: 0.85rem;
+}
+
+.rbc-selected {
+  background-color: var(--medium);
+}
+
+.rbc-today {
+  background-color: var(--light);
+}
+
+.rbc-time-view .rbc-time-slot {
+  border-top: 1px solid var(--medium);
+}
+
+.rbc-header {
+  background-color: var(--medium);
+  color: white;
+  padding: 0.25rem;
+}
