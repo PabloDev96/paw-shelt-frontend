@@ -21,7 +21,7 @@ export default function Login() {
       imageWidth: 120,
       imageAlt: "Logo de Pawshelt",
       showConfirmButton: false,
-      timer: 1500,
+      timer: 2000,
       background: "var(--light)",
       color: "var(--dark)",
       customClass: {
@@ -67,7 +67,8 @@ export default function Login() {
       }));
 
 
-      await showSuccess("¡Login exitoso!", "Bienvenido a tu panel de gestión.", 2000);
+      await showSuccess("¡Login exitoso!", "Redirigiendo al panel...", 2000);
+      localStorage.setItem("showLoginSuccess", "true");
       navigate("/panel");
 
     } catch (error) {

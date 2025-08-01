@@ -1,14 +1,25 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import "./styles/Dashboard.css";
 import { LuDog } from "react-icons/lu";
 import { IoCalendarOutline, IoLogOutOutline } from "react-icons/io5";
 import { MdEuro, MdPersonAdd } from "react-icons/md";
-import { Tooltip } from 'react-tooltip';
+import { Tooltip } from "react-tooltip";
+import { showWelcomeDashboard } from "../utils/alerts";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
+
+  useEffect(() => {
+    const shouldShow = localStorage.getItem("showLoginSuccess");
+    if (shouldShow) {
+      showWelcomeDashboard(user?.nombre || "");
+      localStorage.removeItem("showLoginSuccess");
+    }
+  }, []);
+
+
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -19,7 +30,6 @@ export default function Dashboard() {
   return (
     <div className="dashboard-layout">
       <header className="dashboard-header">
-
         <div className="header-left">
           <div className="logo">
             <img src="/logo/pawshelt.png" alt="Pawshelt" />
@@ -37,7 +47,6 @@ export default function Dashboard() {
           <NavLink to="/citas" data-tooltip-id="tooltip" data-tooltip-content="Citas">
             <IoCalendarOutline />
           </NavLink>
-
           {user?.rol === "ADMIN" && (
             <>
               <NavLink to="/finanzas" data-tooltip-id="tooltip" data-tooltip-content="Finanzas">
@@ -60,7 +69,6 @@ export default function Dashboard() {
             <IoLogOutOutline />
           </button>
         </div>
-
       </header>
 
       <main className="dashboard-content">
@@ -69,7 +77,6 @@ export default function Dashboard() {
 
       <Tooltip id="tooltip" place="top" />
       <Tooltip id="menu-tip" place="left" />
-      
     </div>
   );
 }

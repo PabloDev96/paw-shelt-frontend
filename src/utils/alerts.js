@@ -67,3 +67,21 @@ export const showConfirm = (title, text = '') => {
     },
   });
 };
+
+export const showWelcomeDashboard = (nombreUsuario) => {
+  return MySwal.fire({
+    title: `¡Bienvenido ${nombreUsuario}!`,
+    text: 'Administra tus animales, citas y más desde aquí.',
+    imageUrl: '/logo/pawshelt.png',
+    imageWidth: 120,
+    imageAlt: 'Logo de Pawshelt',
+    background: COLORS.background,
+    color: COLORS.text,
+    showConfirmButton: false,
+    timer: 2500,
+    customClass: {
+      popup: 'swal-popup',
+      title: 'swal-title',
+    },
+  });
+};

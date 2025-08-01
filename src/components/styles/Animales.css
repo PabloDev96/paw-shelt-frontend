@@ -21,9 +21,13 @@
 
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 1.5rem;
+  justify-content: center;
+  max-width: 100%; /* opcional, ajusta según el diseño */
+  margin: 0 auto;     /* centra el grid si se usa max-width */
 }
+
 
 .animal-card {
   background-color: white;
