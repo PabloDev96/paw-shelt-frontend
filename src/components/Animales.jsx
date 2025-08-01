@@ -48,6 +48,8 @@ export default function Animales() {
         sexo: null,
         etapa: null,
     });
+
+    const subfiltrosRef = useRef(null);
     const filtroRef = useRef(null);
     const [subfiltroPos, setSubfiltroPos] = useState({ left: 0 });
     const [subfiltrosVisibles, setSubfiltrosVisibles] = useState(false);
@@ -59,6 +61,30 @@ export default function Animales() {
     useEffect(() => {
         fetchAnimales();
     }, [navigate]);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (
+                subfiltrosRef.current &&
+                !subfiltrosRef.current.contains(event.target) &&
+                filtroRef.current &&
+                !filtroRef.current.contains(event.target)
+            ) {
+                setSubfiltrosVisibles(false);
+                setFiltroPrincipal(null);
+                setFiltrosSecundarios({ sexo: null, etapa: null });
+            }
+        };
+
+        if (subfiltrosVisibles) {
+            document.addEventListener("mousedown", handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [subfiltrosVisibles]);
+
 
     const fetchAnimales = async (tipo = null) => {
         try {
@@ -311,6 +337,7 @@ export default function Animales() {
                 <div className="subfiltros-container" style={{ position: "relative" }}>
                     <div
                         className="subfiltros-box"
+                        ref={subfiltrosRef}
                         style={{
                             position: "absolute",
                             top: "100%",

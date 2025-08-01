@@ -462,3 +462,49 @@
 }
 
 
+@media (max-width: 600px) {
+  .filtros {
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .filtros button {
+    padding: 0.3rem 0.5rem;
+    border-radius: 6px;
+  }
+
+  .icono-btn {
+    width: 20px;
+    height: 20px;
+  }
+
+  .busqueda {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .busqueda input {
+    width: 100%;
+    font-size: 0.95rem;
+  }
+
+  .lupa-btn {
+    padding: 0.3rem;
+    border-radius: 4px;
+  }
+
+  .busqueda.activa .input-transicion {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .subfiltros {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .subfiltros button {
+    font-size: 0.9rem;
+    padding: 4px 6px;
+  }
+}
