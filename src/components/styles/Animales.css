@@ -446,23 +446,40 @@
 
 .subfiltros {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
-.subfiltros button {
+.grupo-subfiltro {
+  background-color: var(--medium-light);
+  padding: 8px 12px;
+  border-radius: 10px;
+  display: flex;
+  gap: 8px;
+}
+
+.grupo-subfiltro button {
   background: transparent;
   border: none;
   font-size: 1rem;
   padding: 6px 8px;
   border-radius: 6px;
   cursor: pointer;
-  transition: background 0.2s;
+}
+
+.subfiltros button {
+  background: transparent;
+  border: none;
+  font-size: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
 }
 
 .subfiltros button.activo,
 .subfiltros button:hover {
-  background-color: rgba(0, 0, 0, 0.1);
+  background-color: var(--light);
 }
 
 

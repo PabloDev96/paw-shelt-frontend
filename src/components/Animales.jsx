@@ -70,8 +70,6 @@ export default function Animales() {
                 !filtroRef.current.contains(event.target)
             ) {
                 setSubfiltrosVisibles(false);
-                setFiltroPrincipal(null);
-                setFiltrosSecundarios({ sexo: null, etapa: null });
             }
         };
 
@@ -350,36 +348,41 @@ export default function Animales() {
                     >
                         <div className="flecha-subfiltros" />
                         <div className="subfiltros">
-                            <button
-                                onClick={() => handleFiltroSecundario("sexo", "MACHO")}
-                                className={filtrosSecundarios.sexo === "MACHO" ? "activo" : ""}
-                            >
-                                <MdMale />
-                            </button>
-                            <button
-                                onClick={() => handleFiltroSecundario("sexo", "HEMBRA")}
-                                className={filtrosSecundarios.sexo === "HEMBRA" ? "activo" : ""}
-                            >
-                                <MdFemale />
-                            </button>
-                            <button
-                                onClick={() => handleFiltroSecundario("etapa", "CACHORRO")}
-                                className={filtrosSecundarios.etapa === "CACHORRO" ? "activo" : ""}
-                            >
-                                Cachorro
-                            </button>
-                            <button
-                                onClick={() => handleFiltroSecundario("etapa", "ADULTO")}
-                                className={filtrosSecundarios.etapa === "ADULTO" ? "activo" : ""}
-                            >
-                                Adulto
-                            </button>
-                            <button
-                                onClick={() => handleFiltroSecundario("etapa", "ANCIANO")}
-                                className={filtrosSecundarios.etapa === "ANCIANO" ? "activo" : ""}
-                            >
-                                Anciano
-                            </button>
+                            <div className="grupo-subfiltro">
+                                <button
+                                    onClick={() => handleFiltroSecundario("sexo", "MACHO")}
+                                    className={filtrosSecundarios.sexo === "MACHO" ? "activo" : ""}
+                                >
+                                    <MdMale />
+                                </button>
+                                <button
+                                    onClick={() => handleFiltroSecundario("sexo", "HEMBRA")}
+                                    className={filtrosSecundarios.sexo === "HEMBRA" ? "activo" : ""}
+                                >
+                                    <MdFemale />
+                                </button>
+                            </div>
+
+                            <div className="grupo-subfiltro">
+                                <button
+                                    onClick={() => handleFiltroSecundario("etapa", "CACHORRO")}
+                                    className={filtrosSecundarios.etapa === "CACHORRO" ? "activo" : ""}
+                                >
+                                    Cachorro
+                                </button>
+                                <button
+                                    onClick={() => handleFiltroSecundario("etapa", "ADULTO")}
+                                    className={filtrosSecundarios.etapa === "ADULTO" ? "activo" : ""}
+                                >
+                                    Adulto
+                                </button>
+                                <button
+                                    onClick={() => handleFiltroSecundario("etapa", "ANCIANO")}
+                                    className={filtrosSecundarios.etapa === "ANCIANO" ? "activo" : ""}
+                                >
+                                    Anciano
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
