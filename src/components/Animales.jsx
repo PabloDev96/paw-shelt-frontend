@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useLayoutEffect } from "react";
 import "./styles/Animales.css";
 import { showSuccess, showError, showConfirm } from "../utils/alerts";
 import { useNavigate } from "react-router-dom";
@@ -53,8 +53,7 @@ export default function Animales() {
     const filtroRef = useRef(null);
     const [subfiltroPos, setSubfiltroPos] = useState({ left: 0 });
     const [subfiltrosVisibles, setSubfiltrosVisibles] = useState(false);
-
-
+    const [botonFiltroRef, setBotonFiltroRef] = useState(null);
 
     const navigate = useNavigate();
 
@@ -85,6 +84,20 @@ export default function Animales() {
         };
     }, [subfiltrosVisibles]);
 
+    useLayoutEffect(() => {
+        if (
+            subfiltrosVisibles &&
+            botonFiltroRef &&
+            botonFiltroRef.current &&
+            filtroRef.current
+        ) {
+            const rect = botonFiltroRef.current.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const containerRect = filtroRef.current.getBoundingClientRect();
+            const offsetLeft = centerX - containerRect.left;
+            setSubfiltroPos({ left: offsetLeft });
+        }
+    }, [subfiltrosVisibles, botonFiltroRef]);
 
     const fetchAnimales = async (tipo = null) => {
         try {
@@ -112,8 +125,13 @@ export default function Animales() {
     };
 
     const handleClickFiltro = (tipo, ref) => {
-        if (filtroPrincipal === tipo) {
-            // Ocultar si ya está seleccionado
+        if (filtroPrincipal === tipo && !subfiltrosVisibles) {
+            setSubfiltrosVisibles(true);
+            setBotonFiltroRef(ref);
+            return;
+        }
+
+        if (filtroPrincipal === tipo && subfiltrosVisibles) {
             setSubfiltrosVisibles(false);
             setFiltroPrincipal(null);
             setFiltrosSecundarios({ sexo: null, etapa: null });
@@ -121,21 +139,12 @@ export default function Animales() {
             return;
         }
 
-        // Mostrar subfiltros ANTES de cambiar filtroPrincipal
         setSubfiltrosVisibles(true);
         setFiltroPrincipal(tipo);
         setFiltrosSecundarios({ sexo: null, etapa: null });
+        setBotonFiltroRef(ref);
         fetchAnimales(tipo);
-
-        if (ref && ref.current) {
-            const rect = ref.current.getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const containerRect = filtroRef.current?.getBoundingClientRect();
-            const offsetLeft = containerRect ? centerX - containerRect.left : 0;
-            setSubfiltroPos({ left: offsetLeft });
-        }
     };
-
 
     const handleFiltroSecundario = (tipo, valor) => {
         setFiltrosSecundarios((prev) => ({ ...prev, [tipo]: valor }));
@@ -241,16 +250,12 @@ export default function Animales() {
         }
     };
 
-
-
     const animalesFiltrados = animales.filter((animal) => {
         const termino = busqueda.toLowerCase();
         const estadoNormalizado = formatearEnum(animal.estado).toLowerCase();
 
-        // Filtrar por sexo
         if (filtrosSecundarios.sexo && animal.sexo !== filtrosSecundarios.sexo) return false;
 
-        // Filtrar por etapa (edad)
         const edad = animal.edadCantidad;
         const unidad = animal.unidadEdad;
 
@@ -262,14 +267,12 @@ export default function Animales() {
             if (!(unidad === "ANIOS" && edad >= 9)) return false;
         }
 
-        // Búsqueda por texto
         return (
             animal.nombre.toLowerCase().includes(termino) ||
             animal.raza.toLowerCase().includes(termino) ||
             estadoNormalizado.includes(termino)
         );
     });
-
     return (
         <div className="animales-container">
             {error && <p className="error">{error}</p>}
