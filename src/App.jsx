@@ -6,8 +6,7 @@ import RutaProtegida from "./components/RutaProtegida";
 import Login from "./components/Login";
 import Dashboard from "./components/Dashboard";
 import Animales from "./components/Animales";
-{/*import Citas from "./components/Citas";*/}
-
+import Citas from "./components/Citas";
 import CrearUsuario from "./components/CrearUsuario";
 
 function App() {
@@ -17,14 +16,20 @@ function App() {
         {/* Ruta pública */}
         <Route path="/" element={<Login />} />
 
-        {/* Dashboard layout con rutas protegidas */}
-        <Route element={<Dashboard />}>
-          <Route path="/panel" element={<div></div>} />
-          <Route path="/animales" element={<Animales />} />
-          {/* <Route path="/citas" element={<Citas />} /> */}
-          {/* Solo ADMIN puede acceder */}
+        {/* Rutas protegidas bajo Dashboard */}
+        <Route
+          path="/"
+          element={
+            <RutaProtegida>
+              <Dashboard />
+            </RutaProtegida>
+          }
+        >
+          <Route path="panel" element={<div />} />
+          <Route path="animales" element={<Animales />} />
+          <Route path="citas" element={<Citas />} />
           <Route
-            path="/crear-usuario"
+            path="crear-usuario"
             element={
               <RutaProtegida rolRequerido="ADMIN">
                 <CrearUsuario />

@@ -1,13 +1,26 @@
 import React from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 
-export default function RutaProtegida({ children, rolRequerido }) {
+// Simula una función para extraer datos del token o de localStorage
+const getUserFromToken = () => {
+  const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user"));
 
-  // Si no hay usuario o no tiene el rol necesario, redirige
-  if (!user || user.rol !== rolRequerido) {
+  return token && user ? user : null;
+};
+
+export default function RutaProtegida({ children, rolRequerido }) {
+  const usuario = getUserFromToken();
+
+  if (!usuario) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (rolRequerido && usuario.rol !== rolRequerido) {
     return <Navigate to="/panel" replace />;
   }
 
-  return children;
+  // Si hay `children`, esta ruta es una hoja protegida
+  // Si no, se usa como layout protegido (como en App.jsx)
+  return children ? children : <Outlet />;
 }

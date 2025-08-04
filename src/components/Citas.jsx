@@ -1,72 +1,321 @@
-import React, { useState } from "react";
-import { Calendar, Views } from "react-big-calendar";
-import { localizer } from "../utils/calendarUtils";
-import "react-big-calendar/lib/css/react-big-calendar.css";
+import React, { useEffect, useState } from "react";
+import { FaPencilAlt, FaTrashAlt } from "react-icons/fa";
+import { showError, showSuccess, showConfirm } from "../utils/alerts";
 import "./styles/Citas.css";
 
-const mockCitas = [
-  {
-    id: 1,
-    animal: "Bobby",
-    personaContacto: "María Gómez",
-    fecha: "2025-08-01T10:00:00",
-  },
-  {
-    id: 2,
-    animal: "Luna",
-    personaContacto: "Carlos Pérez",
-    fecha: "2025-08-02T12:00:00",
-  },
-];
-
 export default function Citas() {
-  const [vista, setVista] = useState("calendario"); // "lista" o "calendario"
+  const [citas, setCitas] = useState([]);
+  const [adoptantes, setAdoptantes] = useState([]);
+  const [mostrarModalCita, setMostrarModalCita] = useState(false);
+  const [mostrarModalEditar, setMostrarModalEditar] = useState(false);
+  const [mostrarModalAdoptante, setMostrarModalAdoptante] = useState(false);
+  const [nuevaCita, setNuevaCita] = useState({ descripcion: "", fechaHoraInicio: "", fechaHoraFin: "" });
+  const [citaAEditar, setCitaAEditar] = useState(null);
+  const [busqueda, setBusqueda] = useState("");
+  const [adoptanteSeleccionado, setAdoptanteSeleccionado] = useState(null);
+  const [nuevoAdoptante, setNuevoAdoptante] = useState({ nombre: "", email: "", telefono: "", direccion: "" });
 
-  const cambiarVista = (nuevaVista) => {
-    setVista(nuevaVista);
+  const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    fetchCitas();
+    fetchAdoptantes();
+  }, []);
+
+  const fetchCitas = async () => {
+    const res = await fetch("http://localhost:8080/citas", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    setCitas(data);
   };
 
-  return (
-    <div className="citas-container">
-      <div className="citas-header">
-        <h2>Citas</h2>
-        <div className="vista-toggle">
-          <button onClick={() => cambiarVista("calendario")} className={vista === "calendario" ? "activo" : ""}>
-            Calendario
-          </button>
-          <button onClick={() => cambiarVista("lista")} className={vista === "lista" ? "activo" : ""}>
-            Lista
+  const fetchAdoptantes = async () => {
+    const res = await fetch("http://localhost:8080/adoptantes", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    setAdoptantes(data);
+  };
+
+  const handleCrearAdoptante = async () => {
+    const { nombre, email, telefono, direccion } = nuevoAdoptante;
+
+    if (!nombre || !email || !telefono || !direccion) {
+      return showError("Campos incompletos", "Todos los campos son obligatorios.");
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return showError("Correo no válido", "Introduce un email válido.");
+    }
+
+    const telefonoRegex = /^[0-9]{9}$/;
+    if (!telefonoRegex.test(telefono)) {
+      return showError("Teléfono no válido", "Debe contener exactamente 9 dígitos numéricos.");
+    }
+
+    const res = await fetch("http://localhost:8080/adoptantes", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(nuevoAdoptante),
+    });
+
+    if (res.ok) {
+      setMostrarModalAdoptante(false);
+      setNuevoAdoptante({ nombre: "", email: "", telefono: "", direccion: "" });
+      fetchAdoptantes();
+      showSuccess("Adoptante creado correctamente");
+    } else {
+      showError("Error al crear adoptante", "Revisa los datos o el servidor.");
+    }
+  };
+
+  const handleCrearCita = async () => {
+    if (!adoptanteSeleccionado) {
+      return showError("Selecciona un adoptante");
+    }
+
+    const { descripcion, fechaHoraInicio, fechaHoraFin } = nuevaCita;
+
+    if (!descripcion || !fechaHoraInicio || !fechaHoraFin) {
+      return showError("Campos incompletos", "Todos los campos son obligatorios.");
+    }
+
+    if (new Date(fechaHoraFin) <= new Date(fechaHoraInicio)) {
+      return showError("Fechas no válidas", "La fecha de fin debe ser posterior a la de inicio.");
+    }
+
+    const body = {
+      titulo: `Cita con ${adoptanteSeleccionado.nombre}`,
+      descripcion,
+      fechaHoraInicio,
+      fechaHoraFin,
+      personaAdoptanteId: adoptanteSeleccionado.id,
+    };
+
+    const res = await fetch("http://localhost:8080/citas", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (res.ok) {
+      setMostrarModalCita(false);
+      setNuevaCita({ descripcion: "", fechaHoraInicio: "", fechaHoraFin: "" });
+      setAdoptanteSeleccionado(null);
+      setBusqueda("");
+      fetchCitas();
+      showSuccess("Cita creada correctamente");
+    } else {
+      showError("Error al crear la cita", "Revisa los datos o el servidor.");
+    }
+  };
+
+
+  const abrirModalEditar = (cita) => {
+    setCitaAEditar(cita);
+    setAdoptanteSeleccionado(
+      adoptantes.find((a) => a.id === cita.personaAdoptanteId)
+    );
+    setNuevaCita({
+      descripcion: cita.descripcion,
+      fechaHoraInicio: cita.fechaHoraInicio,
+      fechaHoraFin: cita.fechaHoraFin,
+    });
+    setMostrarModalEditar(true);
+  };
+
+  const handleActualizarCita = async () => {
+    if (!citaAEditar || !adoptanteSeleccionado) return;
+
+    const body = {
+      titulo: `Cita con ${adoptanteSeleccionado.nombre}`,
+      descripcion: nuevaCita.descripcion,
+      fechaHoraInicio: nuevaCita.fechaHoraInicio,
+      fechaHoraFin: nuevaCita.fechaHoraFin,
+      personaAdoptanteId: adoptanteSeleccionado.id,
+    };
+
+    const res = await fetch(`http://localhost:8080/citas/${citaAEditar.id}`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (res.ok) {
+      setMostrarModalEditar(false);
+      setCitaAEditar(null);
+      resetCitaForm();
+      fetchCitas();
+    }
+  };
+
+  const eliminarCita = async (id) => {
+    const confirmado = await showConfirm("¿Eliminar cita?", "Esta acción no se puede deshacer.");
+
+    if (!confirmado.isConfirmed) return;
+
+    const res = await fetch(`http://localhost:8080/citas/${id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (res.ok) {
+      fetchCitas();
+      showSuccess("Cita eliminada");
+    } else {
+      showError("Error al eliminar cita");
+    }
+  };
+
+
+  const resetCitaForm = () => {
+    setNuevaCita({ descripcion: "", fechaHoraInicio: "", fechaHoraFin: "" });
+    setAdoptanteSeleccionado(null);
+    setBusqueda("");
+  };
+
+  const adoptantesFiltrados = adoptantes.filter((a) =>
+    a.nombre.toLowerCase().includes(busqueda.toLowerCase())
+  );
+
+  const renderCitaModal = (modoEditar = false) => (
+    <div className="citas-modal-overlay">
+      <div className="citas-modal">
+        <h3>{modoEditar ? "Editar Cita" : "Nueva Cita"}</h3>
+
+        <input
+          placeholder="Buscar adoptante..."
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+        />
+        <select
+          onChange={(e) =>
+            setAdoptanteSeleccionado(adoptantes.find((a) => a.id === parseInt(e.target.value)))
+          }
+          value={adoptanteSeleccionado?.id || ""}
+        >
+          <option value="">Seleccionar adoptante</option>
+          {adoptantesFiltrados.map((a) => (
+            <option key={a.id} value={a.id}>
+              {a.nombre}
+            </option>
+          ))}
+        </select>
+
+        <input
+          type="datetime-local"
+          value={nuevaCita.fechaHoraInicio}
+          onChange={(e) => setNuevaCita({ ...nuevaCita, fechaHoraInicio: e.target.value })}
+        />
+        <input
+          type="datetime-local"
+          value={nuevaCita.fechaHoraFin}
+          onChange={(e) => setNuevaCita({ ...nuevaCita, fechaHoraFin: e.target.value })}
+        />
+        <textarea
+          placeholder="Descripción"
+          value={nuevaCita.descripcion}
+          onChange={(e) => setNuevaCita({ ...nuevaCita, descripcion: e.target.value })}
+        />
+        <div className="citas-modal-actions">
+          <button onClick={modoEditar ? handleActualizarCita : handleCrearCita}>Guardar</button>
+          <button
+            onClick={() => {
+              modoEditar ? setMostrarModalEditar(false) : setMostrarModalCita(false);
+              setCitaAEditar(null);
+              resetCitaForm();
+            }}
+          >
+            Cancelar
           </button>
         </div>
       </div>
+    </div>
+  );
 
-      {vista === "calendario" ? (
-        <div className="calendario-wrapper">
-          <Calendar
-            localizer={localizer}
-            events={mockCitas.map((cita) => ({
-              title: `${cita.animal} - ${cita.personaContacto}`,
-              start: new Date(cita.fecha),
-              end: new Date(new Date(cita.fecha).getTime() + 30 * 60 * 1000), // 30 min
-              allDay: false,
-            }))}
-            startAccessor="start"
-            endAccessor="end"
-            defaultView={Views.WEEK}
-            style={{ height: 500 }}
-            popup
-          />
-        </div>
-      ) : (
-        <div className="lista-citas">
-          {mockCitas.map((cita) => (
-            <div key={cita.id} className="item-cita">
-              <strong>{cita.animal}</strong> - {cita.personaContacto}
-              <div>{new Date(cita.fecha).toLocaleString()}</div>
+  return (
+    <div className="citas-container">
+      <h2>Listado de Citas</h2>
+
+      <div className="citas-acciones">
+        <button className="citas-btn" onClick={() => setMostrarModalAdoptante(true)}>
+          Crear ficha Adoptante
+        </button>
+        <button className="citas-btn" onClick={() => setMostrarModalCita(true)}>
+          Crear Cita
+        </button>
+      </div>
+
+      <div className="citas-grid">
+        {citas.length === 0 ? (
+          <p>No hay citas registradas.</p>
+        ) : (
+          citas.map((cita) => (
+            <div key={cita.id} className="citas-card">
+              <div className="citas-info">
+                <h3>{cita.titulo}</h3>
+                <p><strong>Inicio:</strong> {new Date(cita.fechaHoraInicio).toLocaleString("es-ES")}</p>
+                <p><strong>Fin:</strong> {new Date(cita.fechaHoraFin).toLocaleString("es-ES")}</p>
+                <p><strong>Descripción:</strong> {cita.descripcion}</p>
+                <div className="citas-botones">
+                  <button
+                    className="icon-btn editar-btn"
+                    onClick={() => abrirModalEditar(cita)}
+                    data-tooltip-id="tooltip"
+                    data-tooltip-content="Editar"
+                  >
+                    <FaPencilAlt />
+                  </button>
+                  <button
+                    className="icon-btn eliminar-btn"
+                    onClick={() => eliminarCita(cita.id)}
+                    data-tooltip-id="tooltip"
+                    data-tooltip-content="Eliminar"
+                  >
+                    <FaTrashAlt />
+                  </button>
+                </div>
+              </div>
             </div>
-          ))}
+          ))
+        )}
+      </div>
+
+      {/* Modal Crear Adoptante */}
+      {mostrarModalAdoptante && (
+        <div className="citas-modal-overlay">
+          <div className="citas-modal">
+            <h3>Nueva Persona Adoptante</h3>
+            <input placeholder="Nombre" value={nuevoAdoptante.nombre} onChange={(e) => setNuevoAdoptante({ ...nuevoAdoptante, nombre: e.target.value })} />
+            <input placeholder="Email" value={nuevoAdoptante.email} onChange={(e) => setNuevoAdoptante({ ...nuevoAdoptante, email: e.target.value })} />
+            <input placeholder="Teléfono" value={nuevoAdoptante.telefono} onChange={(e) => setNuevoAdoptante({ ...nuevoAdoptante, telefono: e.target.value })} />
+            <input placeholder="Dirección" value={nuevoAdoptante.direccion} onChange={(e) => setNuevoAdoptante({ ...nuevoAdoptante, direccion: e.target.value })} />
+            <div className="citas-modal-actions">
+              <button onClick={handleCrearAdoptante}>Guardar</button>
+              <button onClick={() => setMostrarModalAdoptante(false)}>Cancelar</button>
+            </div>
+          </div>
         </div>
       )}
+
+      {/* Modal Crear Cita */}
+      {mostrarModalCita && renderCitaModal(false)}
+
+      {/* Modal Editar Cita */}
+      {mostrarModalEditar && renderCitaModal(true)}
     </div>
   );
 }
