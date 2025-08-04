@@ -45,10 +45,13 @@ export default function CrearUsuario() {
         }
 
         try {
+            const token = localStorage.getItem("token");
+            
             const response = await fetch("http://localhost:8080/auth/register", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify(usuario),
             });
