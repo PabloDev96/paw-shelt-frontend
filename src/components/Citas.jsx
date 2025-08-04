@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { FaPencilAlt, FaTrashAlt } from "react-icons/fa";
 import { showError, showSuccess, showConfirm } from "../utils/alerts";
+import Select from "react-select";
+
 import "./styles/Citas.css";
 
 export default function Citas() {
@@ -90,7 +92,7 @@ export default function Citas() {
     }
 
     const body = {
-      titulo: `Cita con ${adoptanteSeleccionado.nombre}`,
+      titulo: `${adoptanteSeleccionado.nombre}`,
       descripcion,
       fechaHoraInicio,
       fechaHoraFin,
@@ -136,7 +138,7 @@ export default function Citas() {
     if (!citaAEditar || !adoptanteSeleccionado) return;
 
     const body = {
-      titulo: `Cita con ${adoptanteSeleccionado.nombre}`,
+      titulo: `${adoptanteSeleccionado.nombre}`,
       descripcion: nuevaCita.descripcion,
       fechaHoraInicio: nuevaCita.fechaHoraInicio,
       fechaHoraFin: nuevaCita.fechaHoraFin,
@@ -196,24 +198,23 @@ export default function Citas() {
       <div className="citas-modal">
         <h3>{modoEditar ? "Editar Cita" : "Nueva Cita"}</h3>
 
-        <input
-          placeholder="Buscar adoptante..."
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-        />
-        <select
-          onChange={(e) =>
-            setAdoptanteSeleccionado(adoptantes.find((a) => a.id === parseInt(e.target.value)))
+        <Select
+          className="citas-select"
+          classNamePrefix="citas"
+          options={adoptantes.map((a) => ({ value: a.id, label: a.nombre }))}
+          onChange={(selectedOption) =>
+            setAdoptanteSeleccionado(
+              adoptantes.find((a) => a.id === selectedOption?.value)
+            )
           }
-          value={adoptanteSeleccionado?.id || ""}
-        >
-          <option value="">Seleccionar adoptante</option>
-          {adoptantesFiltrados.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.nombre}
-            </option>
-          ))}
-        </select>
+          value={
+            adoptanteSeleccionado
+              ? { value: adoptanteSeleccionado.id, label: adoptanteSeleccionado.nombre }
+              : null
+          }
+          placeholder="Seleccionar adoptante..."
+          isClearable
+        />
 
         <input
           type="datetime-local"

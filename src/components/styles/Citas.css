@@ -149,3 +149,27 @@
 .icon-btn svg {
   font-size: 1.2rem;
 }
+
+/* Estilo react-select con clase personalizada */
+.citas-select .citas__control {
+  border-radius: 6px;
+  border: 2px solid #ccc;
+  box-shadow: none;
+  min-height: 42px;
+  transition: border-color 0.2s ease;
+  margin-bottom: 1rem; /* Espaciado entre campos */
+}
+
+.citas-select .citas__control--is-focused,
+.citas-select .citas__control:hover {
+  border-color: black;
+  box-shadow: none;
+}
+
+.citas-select .citas__single-value {
+  color: var(--dark);
+}
+
+.citas-select .citas__placeholder {
+  color: #999;
+}
