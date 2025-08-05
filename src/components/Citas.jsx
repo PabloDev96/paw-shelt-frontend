@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { FaPencilAlt, FaTrashAlt } from "react-icons/fa";
+import { IoMdPerson } from "react-icons/io";
+import { FaPencilAlt, FaTrashAlt, FaPlus } from "react-icons/fa";
+import { IoCalendarOutline} from "react-icons/io5";
 import { showError, showSuccess, showConfirm } from "../utils/alerts";
 import Select from "react-select";
 import DatePicker from "react-datepicker";
@@ -79,6 +81,18 @@ export default function Citas() {
     }
   };
 
+  const formatDateForLocalDateTime = (date) => {
+    const pad = (n) => String(n).padStart(2, '0');
+    const year = date.getFullYear();
+    const month = pad(date.getMonth() + 1);
+    const day = pad(date.getDate());
+    const hours = pad(date.getHours());
+    const minutes = pad(date.getMinutes());
+
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
+
   const handleCrearCita = async () => {
     if (!adoptanteSeleccionado) {
       return showError("Selecciona un adoptante");
@@ -97,8 +111,8 @@ export default function Citas() {
     const body = {
       titulo: `${adoptanteSeleccionado.nombre}`,
       descripcion,
-      fechaHoraInicio,
-      fechaHoraFin,
+      fechaHoraInicio: formatDateForLocalDateTime(new Date(fechaHoraInicio)),
+      fechaHoraFin: formatDateForLocalDateTime(new Date(fechaHoraFin)),
       personaAdoptanteId: adoptanteSeleccionado.id,
     };
 
@@ -143,8 +157,8 @@ export default function Citas() {
     const body = {
       titulo: `${adoptanteSeleccionado.nombre}`,
       descripcion: nuevaCita.descripcion,
-      fechaHoraInicio: nuevaCita.fechaHoraInicio,
-      fechaHoraFin: nuevaCita.fechaHoraFin,
+      fechaHoraInicio: formatDateForLocalDateTime(new Date(nuevaCita.fechaHoraInicio)),
+      fechaHoraFin: formatDateForLocalDateTime(new Date(nuevaCita.fechaHoraFin)),
       personaAdoptanteId: adoptanteSeleccionado.id,
     };
 
@@ -266,14 +280,25 @@ export default function Citas() {
 
   return (
     <div className="citas-container">
-      <h2>Listado de Citas</h2>
 
       <div className="citas-acciones">
-        <button className="citas-btn" onClick={() => setMostrarModalAdoptante(true)}>
-          Crear ficha Adoptante
+        <button
+          className="citas-btn"
+          onClick={() => setMostrarModalAdoptante(true)}
+          data-tooltip-id="tooltip"
+          data-tooltip-content="Crear Ficha Adoptante"
+        >
+          <FaPlus />
+          <IoMdPerson className="citas-icon"/>
         </button>
-        <button className="citas-btn" onClick={() => setMostrarModalCita(true)}>
-          Crear Cita
+        <button
+          className="citas-btn"
+          onClick={() => setMostrarModalCita(true)}
+          data-tooltip-id="tooltip"
+          data-tooltip-content="Crear Cita"
+        >
+          <FaPlus />
+          <IoCalendarOutline className="citas-icon"/>
         </button>
       </div>
 
@@ -281,34 +306,60 @@ export default function Citas() {
         {citas.length === 0 ? (
           <p>No hay citas registradas.</p>
         ) : (
-          citas.map((cita) => (
-            <div key={cita.id} className="citas-card">
-              <div className="citas-info">
-                <h3>{cita.titulo}</h3>
-                <p><strong>Inicio:</strong> {new Date(cita.fechaHoraInicio).toLocaleString("es-ES")}</p>
-                <p><strong>Fin:</strong> {new Date(cita.fechaHoraFin).toLocaleString("es-ES")}</p>
-                <p><strong>Descripción:</strong> {cita.descripcion}</p>
-                <div className="citas-botones">
-                  <button
-                    className="icon-btn editar-btn"
-                    onClick={() => abrirModalEditar(cita)}
-                    data-tooltip-id="tooltip"
-                    data-tooltip-content="Editar"
+          [...citas]
+            .sort((a, b) => new Date(a.fechaHoraInicio) - new Date(b.fechaHoraInicio))
+            .map((cita) => (
+              (() => {
+                const esExpirada = new Date(cita.fechaHoraFin) < new Date();
+
+                return (
+                  <div
+                    key={cita.id}
+                    className={`citas-card ${esExpirada ? "cita-expirada" : ""}`}
                   >
-                    <FaPencilAlt />
-                  </button>
-                  <button
-                    className="icon-btn eliminar-btn"
-                    onClick={() => eliminarCita(cita.id)}
-                    data-tooltip-id="tooltip"
-                    data-tooltip-content="Eliminar"
-                  >
-                    <FaTrashAlt />
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))
+                    <div className="citas-info">
+                      <h3>{cita.titulo}</h3>
+                      <p>{new Date(cita.fechaHoraInicio).toLocaleDateString("es-ES")}</p>
+                      <p>
+                        {new Date(cita.fechaHoraInicio).toLocaleTimeString("es-ES", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: false,
+                        })}
+                        {" - "}
+                        {new Date(cita.fechaHoraFin).toLocaleTimeString("es-ES", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: false,
+                        })}
+                      </p>
+                      <p>{cita.descripcion}</p>
+
+                      <div className="citas-botones">
+                        <button
+                          className="icon-btn editar-btn"
+                          onClick={() => abrirModalEditar(cita)}
+                          disabled={esExpirada}
+                          data-tooltip-id="tooltip"
+                          data-tooltip-content={esExpirada ? "Cita expirada" : "Editar"}
+                        >
+                          <FaPencilAlt />
+                        </button>
+                        <button
+                          className="icon-btn eliminar-btn"
+                          onClick={() => eliminarCita(cita.id)}
+                          disabled={esExpirada}
+                          data-tooltip-id="tooltip"
+                          data-tooltip-content={esExpirada ? "Cita expirada" : "Eliminar"}
+                        >
+                          <FaTrashAlt />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()
+            ))
         )}
       </div>
 

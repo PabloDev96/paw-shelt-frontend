@@ -10,7 +10,7 @@
 .citas-container {
   background-color: var(--light);
   min-height: 100vh;
-  padding: 0rem 2rem 2rem 2rem;
+  padding: 2rem;
   color: var(--dark);
 }
 
@@ -23,11 +23,17 @@
 
 
 .citas-acciones {
-  text-align: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-start;
   margin-bottom: 2rem;
 }
 
+
 .citas-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background-color: var(--medium-light);
   color: white;
   border: none;
@@ -37,6 +43,15 @@
   cursor: pointer;
   margin: 0 0.5rem;
   transition: background-color 0.2s ease;
+}
+
+.citas-btn svg:first-child {
+  color: white;
+}
+
+.citas-btn svg:not(:first-child) {
+  color: black;
+  font-size: 1.5rem;
 }
 
 .citas-btn:hover {
@@ -176,5 +191,81 @@
 
 .react-datepicker__current-month {
   text-transform: capitalize;
+}
+
+.citas-card h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 0.6rem;
+  color: #2e3a59;
+}
+
+.citas-card p {
+  margin: 0.3rem 0;
+  color: #4a4a4a;
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+.citas-card p:nth-child(2) {
+  font-weight: 500;
+  color: #2a2a2a;
+}
+
+.citas-card p:nth-child(3) {
+  font-weight: bold;
+  font-size: 1rem;
+  color: #1c4d4d;
+}
+
+.citas-card p:nth-child(4) {
+  font-style: italic;
+  color: #777;
+  margin-top: 0.4rem;
+}
+
+.citas-card .citas-botones {
+  margin-top: 0.8rem;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.cita-expirada .citas-info {
+  opacity: 0.5;
+  filter: grayscale(60%);
+}
+
+.cita-expirada {
+  position: relative;
+  
+  transition: opacity 0.3s ease;
+}
+
+.cita-expirada:hover::after {
+  content: "Cita expirada";
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background-color: var(--error);
+  color: white;
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  z-index: 10;
+  pointer-events: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.citas-botones button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.citas-icon {
+  color: black;
+  font-size: 1.4rem;
+  margin-left: 4px;
 }
 
