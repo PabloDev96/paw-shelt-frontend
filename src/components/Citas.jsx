@@ -2,9 +2,12 @@ import React, { useEffect, useState } from "react";
 import { FaPencilAlt, FaTrashAlt } from "react-icons/fa";
 import { showError, showSuccess, showConfirm } from "../utils/alerts";
 import Select from "react-select";
-
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import "./styles/Citas.css";
-
+import { registerLocale } from "react-datepicker";
+import es from "date-fns/locale/es";
+registerLocale("es", es);
 export default function Citas() {
   const [citas, setCitas] = useState([]);
   const [adoptantes, setAdoptantes] = useState([]);
@@ -216,16 +219,30 @@ export default function Citas() {
           isClearable
         />
 
-        <input
-          type="datetime-local"
-          value={nuevaCita.fechaHoraInicio}
-          onChange={(e) => setNuevaCita({ ...nuevaCita, fechaHoraInicio: e.target.value })}
+        <DatePicker
+          selected={nuevaCita.fechaHoraInicio ? new Date(nuevaCita.fechaHoraInicio) : null}
+          onChange={(date) => setNuevaCita({ ...nuevaCita, fechaHoraInicio: date })}
+          showTimeSelect
+          timeIntervals={30}
+          timeCaption="Hora"
+          dateFormat="dd/MM/yyyy HH:mm"
+          locale="es"
+          placeholderText="Inicio"
+          className="citas-datepicker"
         />
-        <input
-          type="datetime-local"
-          value={nuevaCita.fechaHoraFin}
-          onChange={(e) => setNuevaCita({ ...nuevaCita, fechaHoraFin: e.target.value })}
+
+        <DatePicker
+          selected={nuevaCita.fechaHoraFin ? new Date(nuevaCita.fechaHoraFin) : null}
+          onChange={(date) => setNuevaCita({ ...nuevaCita, fechaHoraFin: date })}
+          showTimeSelect
+          timeIntervals={30}
+          timeCaption="Hora"
+          dateFormat="dd/MM/yyyy HH:mm"
+          locale="es"
+          placeholderText="Fin"
+          className="citas-datepicker"
         />
+
         <textarea
           placeholder="Descripción"
           value={nuevaCita.descripcion}
