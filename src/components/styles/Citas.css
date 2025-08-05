@@ -60,7 +60,7 @@
 
 .citas-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 1.5rem;
 }
 
@@ -268,4 +268,43 @@
   font-size: 1.4rem;
   margin-left: 4px;
 }
+
+.citas-filtros {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.citas-filtros input {
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  width: 80px;
+  font-size: 0.9rem;
+}
+
+.citas-filtros {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.citas-filtros select,
+.citas-filtros input {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  min-width: 100px;
+}
+
+.citas-filtros select:focus,
+.citas-filtros input:focus {
+  outline: none;
+  border-color: var(--medium);
+  box-shadow: 0 0 0 2px rgba(82, 121, 111, 0.2);
+}
+
 

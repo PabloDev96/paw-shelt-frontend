@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { IoMdPerson } from "react-icons/io";
 import { FaPencilAlt, FaTrashAlt, FaPlus } from "react-icons/fa";
-import { IoCalendarOutline} from "react-icons/io5";
+import { IoCalendarOutline } from "react-icons/io5";
 import { showError, showSuccess, showConfirm } from "../utils/alerts";
 import Select from "react-select";
 import DatePicker from "react-datepicker";
@@ -21,8 +21,24 @@ export default function Citas() {
   const [busqueda, setBusqueda] = useState("");
   const [adoptanteSeleccionado, setAdoptanteSeleccionado] = useState(null);
   const [nuevoAdoptante, setNuevoAdoptante] = useState({ nombre: "", email: "", telefono: "", direccion: "" });
+  const [filtroDia, setFiltroDia] = useState("");
+  const [filtroMes, setFiltroMes] = useState("");
+  const [filtroAnio, setFiltroAnio] = useState("");
+  const [errorFechaInvalida, setErrorFechaInvalida] = useState(false);
+  const [mostrarModalFechaInvalida, setMostrarModalFechaInvalida] = useState(false);
+
+
 
   const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    if (filtroDia && filtroMes && filtroAnio) {
+      const valida = esFechaValida(filtroDia, filtroMes, filtroAnio);
+      if (!valida) {
+        showError("Fecha inválida", "La fecha seleccionada no existe. Verifica el día, mes y año.");
+      }
+    }
+  }, [filtroDia, filtroMes, filtroAnio]);
 
   useEffect(() => {
     fetchCitas();
@@ -92,6 +108,17 @@ export default function Citas() {
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
+  const haySolapamiento = (nuevaInicio, nuevaFin, idIgnorado = null) => {
+    return citas.some(cita => {
+      if (cita.id === idIgnorado) return false;
+
+      const inicioExistente = new Date(cita.fechaHoraInicio);
+      const finExistente = new Date(cita.fechaHoraFin);
+      return (
+        nuevaInicio < finExistente && nuevaFin > inicioExistente
+      );
+    });
+  };
 
   const handleCrearCita = async () => {
     if (!adoptanteSeleccionado) {
@@ -104,15 +131,23 @@ export default function Citas() {
       return showError("Campos incompletos", "Todos los campos son obligatorios.");
     }
 
-    if (new Date(fechaHoraFin) <= new Date(fechaHoraInicio)) {
+    const inicio = new Date(fechaHoraInicio);
+    const fin = new Date(fechaHoraFin);
+
+    if (fin <= inicio) {
       return showError("Fechas no válidas", "La fecha de fin debe ser posterior a la de inicio.");
+    }
+
+    // ✅ Validación de solapamiento
+    if (haySolapamiento(inicio, fin)) {
+      return showError("Conflicto de cita", "Ya existe una cita en ese horario.");
     }
 
     const body = {
       titulo: `${adoptanteSeleccionado.nombre}`,
       descripcion,
-      fechaHoraInicio: formatDateForLocalDateTime(new Date(fechaHoraInicio)),
-      fechaHoraFin: formatDateForLocalDateTime(new Date(fechaHoraFin)),
+      fechaHoraInicio: formatDateForLocalDateTime(inicio),
+      fechaHoraFin: formatDateForLocalDateTime(fin),
       personaAdoptanteId: adoptanteSeleccionado.id,
     };
 
@@ -138,6 +173,7 @@ export default function Citas() {
   };
 
 
+
   const abrirModalEditar = (cita) => {
     setCitaAEditar(cita);
     setAdoptanteSeleccionado(
@@ -154,11 +190,29 @@ export default function Citas() {
   const handleActualizarCita = async () => {
     if (!citaAEditar || !adoptanteSeleccionado) return;
 
+    const { descripcion, fechaHoraInicio, fechaHoraFin } = nuevaCita;
+
+    if (!descripcion || !fechaHoraInicio || !fechaHoraFin) {
+      return showError("Campos incompletos", "Todos los campos son obligatorios.");
+    }
+
+    const inicio = new Date(fechaHoraInicio);
+    const fin = new Date(fechaHoraFin);
+
+    if (fin <= inicio) {
+      return showError("Fechas no válidas", "La fecha de fin debe ser posterior a la de inicio.");
+    }
+
+    // ✅ Validación de solapamiento (ignorando su propio ID)
+    if (haySolapamiento(inicio, fin, citaAEditar.id)) {
+      return showError("Conflicto de cita", "Ya existe una cita en ese horario.");
+    }
+
     const body = {
       titulo: `${adoptanteSeleccionado.nombre}`,
-      descripcion: nuevaCita.descripcion,
-      fechaHoraInicio: formatDateForLocalDateTime(new Date(nuevaCita.fechaHoraInicio)),
-      fechaHoraFin: formatDateForLocalDateTime(new Date(nuevaCita.fechaHoraFin)),
+      descripcion,
+      fechaHoraInicio: formatDateForLocalDateTime(inicio),
+      fechaHoraFin: formatDateForLocalDateTime(fin),
       personaAdoptanteId: adoptanteSeleccionado.id,
     };
 
@@ -176,6 +230,9 @@ export default function Citas() {
       setCitaAEditar(null);
       resetCitaForm();
       fetchCitas();
+      showSuccess("Cita actualizada correctamente");
+    } else {
+      showError("Error al actualizar la cita");
     }
   };
 
@@ -206,9 +263,47 @@ export default function Citas() {
     setBusqueda("");
   };
 
+  const filtrarCitasPorFecha = () => {
+    const citasFiltradas = citas.filter((cita) => {
+      const fecha = new Date(cita.fechaHoraInicio);
+      const cumpleDia = filtroDia ? fecha.getDate() === filtroDia : true;
+      const cumpleMes = filtroMes ? fecha.getMonth() + 1 === filtroMes : true;
+      const cumpleAnio = filtroAnio ? fecha.getFullYear() === filtroAnio : true;
+      return cumpleDia && cumpleMes && cumpleAnio;
+    });
+
+    return citasFiltradas;
+  };
+
   const adoptantesFiltrados = adoptantes.filter((a) =>
     a.nombre.toLowerCase().includes(busqueda.toLowerCase())
   );
+
+  const dias = Array.from({ length: 31 }, (_, i) => ({
+    value: i + 1,
+    label: `${i + 1}`,
+  }));
+
+  const meses = [
+    { value: 1, label: "Enero" },
+    { value: 2, label: "Febrero" },
+    { value: 3, label: "Marzo" },
+    { value: 4, label: "Abril" },
+    { value: 5, label: "Mayo" },
+    { value: 6, label: "Junio" },
+    { value: 7, label: "Julio" },
+    { value: 8, label: "Agosto" },
+    { value: 9, label: "Septiembre" },
+    { value: 10, label: "Octubre" },
+    { value: 11, label: "Noviembre" },
+    { value: 12, label: "Diciembre" },
+  ];
+
+  const anios = Array.from(
+    new Set(citas.map((cita) => new Date(cita.fechaHoraInicio).getFullYear()))
+  )
+    .sort((a, b) => b - a)
+    .map((a) => ({ value: a, label: `${a}` }));
 
   const renderCitaModal = (modoEditar = false) => (
     <div className="citas-modal-overlay">
@@ -278,8 +373,47 @@ export default function Citas() {
     </div>
   );
 
+  const esFechaValida = (dia, mes, anio) => {
+    if (!dia || !mes || !anio) return true;
+
+    const fecha = new Date(anio, mes - 1, dia);
+    return (
+      fecha.getFullYear() === parseInt(anio) &&
+      fecha.getMonth() === mes - 1 &&
+      fecha.getDate() === parseInt(dia)
+    );
+  };
+
+
   return (
     <div className="citas-container">
+
+      <div className="citas-filtros">
+        <Select
+          options={dias}
+          onChange={(option) => setFiltroDia(option?.value || "")}
+          placeholder="Día"
+          isClearable
+          className="citas-select"
+          classNamePrefix="citas"
+        />
+        <Select
+          options={meses}
+          onChange={(option) => setFiltroMes(option?.value || "")}
+          placeholder="Mes"
+          isClearable
+          className="citas-select"
+          classNamePrefix="citas"
+        />
+        <Select
+          options={anios}
+          onChange={(option) => setFiltroAnio(option?.value || "")}
+          placeholder="Año"
+          isClearable
+          className="citas-select"
+          classNamePrefix="citas"
+        />
+      </div>
 
       <div className="citas-acciones">
         <button
@@ -289,7 +423,7 @@ export default function Citas() {
           data-tooltip-content="Crear Ficha Adoptante"
         >
           <FaPlus />
-          <IoMdPerson className="citas-icon"/>
+          <IoMdPerson className="citas-icon" />
         </button>
         <button
           className="citas-btn"
@@ -298,20 +432,28 @@ export default function Citas() {
           data-tooltip-content="Crear Cita"
         >
           <FaPlus />
-          <IoCalendarOutline className="citas-icon"/>
+          <IoCalendarOutline className="citas-icon" />
         </button>
       </div>
 
       <div className="citas-grid">
-        {citas.length === 0 ? (
-          <p>No hay citas registradas.</p>
-        ) : (
-          [...citas]
-            .sort((a, b) => new Date(a.fechaHoraInicio) - new Date(b.fechaHoraInicio))
-            .map((cita) => (
-              (() => {
-                const esExpirada = new Date(cita.fechaHoraFin) < new Date();
+        {(() => {
+          const citasFiltradas = filtrarCitasPorFecha();
+          const filtrosCompletos = filtroDia && filtroMes && filtroAnio;
 
+          if (filtrosCompletos && citasFiltradas.length === 0) {
+            return <p>No hay citas en esa fecha.</p>;
+          }
+
+          if (!filtrosCompletos && citas.length === 0) {
+            return <p>No hay citas registradas.</p>;
+          }
+
+          return (
+            citasFiltradas
+              .sort((a, b) => new Date(a.fechaHoraInicio) - new Date(b.fechaHoraInicio))
+              .map((cita) => {
+                const esExpirada = new Date(cita.fechaHoraFin) < new Date();
                 return (
                   <div
                     key={cita.id}
@@ -325,8 +467,7 @@ export default function Citas() {
                           hour: "2-digit",
                           minute: "2-digit",
                           hour12: false,
-                        })}
-                        {" - "}
+                        })}{" - "}
                         {new Date(cita.fechaHoraFin).toLocaleTimeString("es-ES", {
                           hour: "2-digit",
                           minute: "2-digit",
@@ -334,7 +475,6 @@ export default function Citas() {
                         })}
                       </p>
                       <p>{cita.descripcion}</p>
-
                       <div className="citas-botones">
                         <button
                           className="icon-btn editar-btn"
@@ -358,10 +498,11 @@ export default function Citas() {
                     </div>
                   </div>
                 );
-              })()
-            ))
-        )}
+              })
+          );
+        })()}
       </div>
+
 
       {/* Modal Crear Adoptante */}
       {mostrarModalAdoptante && (
@@ -385,6 +526,8 @@ export default function Citas() {
 
       {/* Modal Editar Cita */}
       {mostrarModalEditar && renderCitaModal(true)}
+
+
     </div>
   );
 }
