@@ -1,0 +1,112 @@
+:root {
+  --light: #CAD2C5;
+  --medium-light: #84A98C;
+  --medium: #52796F;
+  --medium-dark: #354F52;
+  --dark: #2F3E46;
+  --error: #FF6B6B;
+}
+
+.adopciones-container {
+  background-color: var(--light);
+  min-height: 100vh;
+  padding: 2rem;
+  color: var(--dark);
+}
+
+.adopciones-container h2 {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: var(--dark);
+  font-size: 1.5rem;
+}
+
+.adopciones-vista-switch {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.adopciones-vista-switch button {
+  background-color: var(--medium-light);
+  color: white;
+  border: none;
+  padding: 0.6rem 1.4rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.adopciones-vista-switch button:hover {
+  background-color: var(--medium);
+  transform: translateY(-1px);
+}
+
+.adopciones-vista-switch button.activo {
+  background-color: var(--dark);
+  color: white;
+  box-shadow: 0 0 0 3px rgba(47, 62, 70, 0.3);
+}
+
+.formulario-adopcion {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 10px;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.formulario-adopcion h3 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.formulario-adopcion label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  margin-top: 1rem;
+}
+
+.formulario-adopcion textarea,
+.adopciones-datepicker {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+  margin-top: 0.3rem;
+}
+
+.adopciones-modal-actions {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: space-between;
+}
+
+.adopciones-modal-actions button {
+  padding: 0.6rem 1.4rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  background-color: var(--medium);
+  color: white;
+  transition: background-color 0.2s ease;
+}
+
+.adopciones-modal-actions button:last-child {
+  background-color: var(--error);
+}
+
+.adopciones-modal-actions button:hover {
+  filter: brightness(1.1);
+}
+
+    

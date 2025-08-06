@@ -8,6 +8,8 @@ import Dashboard from "./components/Dashboard";
 import Animales from "./components/Animales";
 import Citas from "./components/Citas";
 import CrearUsuario from "./components/CrearUsuario";
+import Adopciones from "./components/Adopciones";
+
 
 function App() {
   return (
@@ -28,6 +30,14 @@ function App() {
           <Route path="panel" element={<div />} />
           <Route path="animales" element={<Animales />} />
           <Route path="citas" element={<Citas />} />
+          <Route
+            path="adopciones"
+            element={
+              <RutaProtegida rolRequerido="ADMIN">
+                <Adopciones />
+              </RutaProtegida>
+            }
+          />
           <Route
             path="crear-usuario"
             element={
