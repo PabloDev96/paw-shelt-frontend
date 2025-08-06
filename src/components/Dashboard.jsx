@@ -49,8 +49,15 @@ export default function Dashboard() {
           </NavLink>
           {user?.rol === "ADMIN" && (
             <>
-              <NavLink to="/finanzas" data-tooltip-id="tooltip" data-tooltip-content="Finanzas">
-                <MdEuro />
+              <NavLink to="/adopciones" data-tooltip-id="tooltip" data-tooltip-content="Adopciones">
+                <img src="/public/icons/adopcion.png"
+                  alt="Adopciones"
+                  style={{
+                    width: "38px",
+                    height: "38px",
+                    filter: "invert(72%) sepia(16%) saturate(521%) hue-rotate(79deg) brightness(94%) contrast(85%)",
+                  }}
+                />
               </NavLink>
               <NavLink to="/crear-usuario" data-tooltip-id="tooltip" data-tooltip-content="Crear usuario">
                 <MdPersonAdd />

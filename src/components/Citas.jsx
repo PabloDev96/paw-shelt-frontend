@@ -1,4 +1,12 @@
 import React, { useEffect, useState } from "react";
+
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import timeGridPlugin from "@fullcalendar/timegrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import "@fullcalendar/core/locales/es";
+import "./styles/fullcalendar-custom.css";
+
 import { IoMdPerson } from "react-icons/io";
 import { FaPencilAlt, FaTrashAlt, FaPlus } from "react-icons/fa";
 import { IoCalendarOutline } from "react-icons/io5";
@@ -11,6 +19,7 @@ import { registerLocale } from "react-datepicker";
 import es from "date-fns/locale/es";
 registerLocale("es", es);
 export default function Citas() {
+  const [modoVista, setModoVista] = useState("listado"); // listado | calendario
   const [citas, setCitas] = useState([]);
   const [adoptantes, setAdoptantes] = useState([]);
   const [mostrarModalCita, setMostrarModalCita] = useState(false);
@@ -59,6 +68,49 @@ export default function Citas() {
     });
     const data = await res.json();
     setAdoptantes(data);
+  };
+
+  const handleCitaDrop = async (info) => {
+    const evento = info.event;
+
+    const id = parseInt(evento.id);
+    const cita = citas.find((c) => c.id === id);
+    if (!cita) return;
+
+    const nuevaFechaInicio = evento.start;
+    const nuevaFechaFin = evento.end;
+
+    // Validación: evitar solapamiento con otras citas (excluyendo esta)
+    if (haySolapamiento(nuevaFechaInicio, nuevaFechaFin, id)) {
+      showError("Conflicto de cita", "Ya existe una cita en ese horario.");
+      info.revert(); // Revierte el movimiento
+      return;
+    }
+
+    const body = {
+      titulo: cita.titulo,
+      descripcion: cita.descripcion,
+      fechaHoraInicio: formatDateForLocalDateTime(nuevaFechaInicio),
+      fechaHoraFin: formatDateForLocalDateTime(nuevaFechaFin),
+      personaAdoptanteId: cita.personaAdoptanteId,
+    };
+
+    const res = await fetch(`http://localhost:8080/citas/${id}`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (res.ok) {
+      fetchCitas();
+      showSuccess("Cita actualizada");
+    } else {
+      showError("Error al actualizar la cita");
+      info.revert();
+    }
   };
 
   const handleCrearAdoptante = async () => {
@@ -388,146 +440,220 @@ export default function Citas() {
   return (
     <div className="citas-container">
 
-      <div className="citas-filtros">
-        <Select
-          options={dias}
-          onChange={(option) => setFiltroDia(option?.value || "")}
-          placeholder="Día"
-          isClearable
-          className="citas-select"
-          classNamePrefix="citas"
-        />
-        <Select
-          options={meses}
-          onChange={(option) => setFiltroMes(option?.value || "")}
-          placeholder="Mes"
-          isClearable
-          className="citas-select"
-          classNamePrefix="citas"
-        />
-        <Select
-          options={anios}
-          onChange={(option) => setFiltroAnio(option?.value || "")}
-          placeholder="Año"
-          isClearable
-          className="citas-select"
-          classNamePrefix="citas"
-        />
-      </div>
-
-      <div className="citas-acciones">
+      <div className="citas-vista-switch">
         <button
-          className="citas-btn"
-          onClick={() => setMostrarModalAdoptante(true)}
-          data-tooltip-id="tooltip"
-          data-tooltip-content="Crear Ficha Adoptante"
+          className={modoVista === "listado" ? "activo" : ""}
+          onClick={() => setModoVista("listado")}
         >
-          <FaPlus />
-          <IoMdPerson className="citas-icon" />
+          Listado
         </button>
         <button
-          className="citas-btn"
-          onClick={() => setMostrarModalCita(true)}
-          data-tooltip-id="tooltip"
-          data-tooltip-content="Crear Cita"
+          className={modoVista === "calendario" ? "activo" : ""}
+          onClick={() => setModoVista("calendario")}
         >
-          <FaPlus />
-          <IoCalendarOutline className="citas-icon" />
+          Calendario
         </button>
       </div>
 
-      <div className="citas-grid">
-        {(() => {
-          const citasFiltradas = filtrarCitasPorFecha();
-          const filtrosCompletos = filtroDia && filtroMes && filtroAnio;
 
-          if (filtrosCompletos && citasFiltradas.length === 0) {
-            return <p>No hay citas en esa fecha.</p>;
-          }
+      {/* VISTA DE LISTADO */}
 
-          if (!filtrosCompletos && citas.length === 0) {
-            return <p>No hay citas registradas.</p>;
-          }
-
-          return (
-            citasFiltradas
-              .sort((a, b) => new Date(a.fechaHoraInicio) - new Date(b.fechaHoraInicio))
-              .map((cita) => {
-                const esExpirada = new Date(cita.fechaHoraFin) < new Date();
-                return (
-                  <div
-                    key={cita.id}
-                    className={`citas-card ${esExpirada ? "cita-expirada" : ""}`}
-                  >
-                    <div className="citas-info">
-                      <h3>{cita.titulo}</h3>
-                      <p>{new Date(cita.fechaHoraInicio).toLocaleDateString("es-ES")}</p>
-                      <p>
-                        {new Date(cita.fechaHoraInicio).toLocaleTimeString("es-ES", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          hour12: false,
-                        })}{" - "}
-                        {new Date(cita.fechaHoraFin).toLocaleTimeString("es-ES", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          hour12: false,
-                        })}
-                      </p>
-                      <p>{cita.descripcion}</p>
-                      <div className="citas-botones">
-                        <button
-                          className="icon-btn editar-btn"
-                          onClick={() => abrirModalEditar(cita)}
-                          disabled={esExpirada}
-                          data-tooltip-id="tooltip"
-                          data-tooltip-content={esExpirada ? "Cita expirada" : "Editar"}
-                        >
-                          <FaPencilAlt />
-                        </button>
-                        <button
-                          className="icon-btn eliminar-btn"
-                          onClick={() => eliminarCita(cita.id)}
-                          disabled={esExpirada}
-                          data-tooltip-id="tooltip"
-                          data-tooltip-content={esExpirada ? "Cita expirada" : "Eliminar"}
-                        >
-                          <FaTrashAlt />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-          );
-        })()}
-      </div>
-
-
-      {/* Modal Crear Adoptante */}
-      {mostrarModalAdoptante && (
-        <div className="citas-modal-overlay">
-          <div className="citas-modal">
-            <h3>Nueva Persona Adoptante</h3>
-            <input placeholder="Nombre" value={nuevoAdoptante.nombre} onChange={(e) => setNuevoAdoptante({ ...nuevoAdoptante, nombre: e.target.value })} />
-            <input placeholder="Email" value={nuevoAdoptante.email} onChange={(e) => setNuevoAdoptante({ ...nuevoAdoptante, email: e.target.value })} />
-            <input placeholder="Teléfono" value={nuevoAdoptante.telefono} onChange={(e) => setNuevoAdoptante({ ...nuevoAdoptante, telefono: e.target.value })} />
-            <input placeholder="Dirección" value={nuevoAdoptante.direccion} onChange={(e) => setNuevoAdoptante({ ...nuevoAdoptante, direccion: e.target.value })} />
-            <div className="citas-modal-actions">
-              <button onClick={handleCrearAdoptante}>Guardar</button>
-              <button onClick={() => setMostrarModalAdoptante(false)}>Cancelar</button>
-            </div>
+      {modoVista === "listado" && (
+        <>
+          <div className="citas-filtros">
+            <Select
+              options={dias}
+              onChange={(option) => setFiltroDia(option?.value || "")}
+              placeholder="Día"
+              isClearable
+              className="citas-select"
+              classNamePrefix="citas"
+            />
+            <Select
+              options={meses}
+              onChange={(option) => setFiltroMes(option?.value || "")}
+              placeholder="Mes"
+              isClearable
+              className="citas-select"
+              classNamePrefix="citas"
+            />
+            <Select
+              options={anios}
+              onChange={(option) => setFiltroAnio(option?.value || "")}
+              placeholder="Año"
+              isClearable
+              className="citas-select"
+              classNamePrefix="citas"
+            />
           </div>
+
+          <div className="citas-acciones">
+            <button
+              className="citas-btn"
+              onClick={() => setMostrarModalAdoptante(true)}
+              data-tooltip-id="tooltip"
+              data-tooltip-content="Crear Ficha Adoptante"
+            >
+              <FaPlus />
+              <IoMdPerson className="citas-icon" />
+            </button>
+            <button
+              className="citas-btn"
+              onClick={() => setMostrarModalCita(true)}
+              data-tooltip-id="tooltip"
+              data-tooltip-content="Crear Cita"
+            >
+              <FaPlus />
+              <IoCalendarOutline className="citas-icon" />
+            </button>
+          </div>
+
+          <div className="citas-grid">
+            {(() => {
+              const citasFiltradas = filtrarCitasPorFecha();
+              const filtrosCompletos = filtroDia && filtroMes && filtroAnio;
+
+              if (filtrosCompletos && citasFiltradas.length === 0) {
+                return <p>No hay citas en esa fecha.</p>;
+              }
+
+              if (!filtrosCompletos && citas.length === 0) {
+                return <p>No hay citas registradas.</p>;
+              }
+
+              return (
+                citasFiltradas
+                  .sort((a, b) => new Date(a.fechaHoraInicio) - new Date(b.fechaHoraInicio))
+                  .map((cita) => {
+                    const esExpirada = new Date(cita.fechaHoraFin) < new Date();
+                    return (
+                      <div
+                        key={cita.id}
+                        className={`citas-card ${esExpirada ? "cita-expirada" : ""}`}
+                      >
+                        <div className="citas-info">
+                          <h3>{cita.titulo}</h3>
+                          <p>{new Date(cita.fechaHoraInicio).toLocaleDateString("es-ES")}</p>
+                          <p>
+                            {new Date(cita.fechaHoraInicio).toLocaleTimeString("es-ES", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              hour12: false,
+                            })}{" - "}
+                            {new Date(cita.fechaHoraFin).toLocaleTimeString("es-ES", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              hour12: false,
+                            })}
+                          </p>
+                          <p>{cita.descripcion}</p>
+                          <div className="citas-botones">
+                            <button
+                              className="icon-btn editar-btn"
+                              onClick={() => abrirModalEditar(cita)}
+                              disabled={esExpirada}
+                              data-tooltip-id="tooltip"
+                              data-tooltip-content={esExpirada ? "Cita expirada" : "Editar"}
+                            >
+                              <FaPencilAlt />
+                            </button>
+                            <button
+                              className="icon-btn eliminar-btn"
+                              onClick={() => eliminarCita(cita.id)}
+                              disabled={esExpirada}
+                              data-tooltip-id="tooltip"
+                              data-tooltip-content={esExpirada ? "Cita expirada" : "Eliminar"}
+                            >
+                              <FaTrashAlt />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+              );
+            })()}
+          </div>
+
+
+          {/* Modal Crear Adoptante */}
+          {mostrarModalAdoptante && (
+            <div className="citas-modal-overlay">
+              <div className="citas-modal">
+                <h3>Nueva Persona Adoptante</h3>
+                <input placeholder="Nombre" value={nuevoAdoptante.nombre} onChange={(e) => setNuevoAdoptante({ ...nuevoAdoptante, nombre: e.target.value })} />
+                <input placeholder="Email" value={nuevoAdoptante.email} onChange={(e) => setNuevoAdoptante({ ...nuevoAdoptante, email: e.target.value })} />
+                <input placeholder="Teléfono" value={nuevoAdoptante.telefono} onChange={(e) => setNuevoAdoptante({ ...nuevoAdoptante, telefono: e.target.value })} />
+                <input placeholder="Dirección" value={nuevoAdoptante.direccion} onChange={(e) => setNuevoAdoptante({ ...nuevoAdoptante, direccion: e.target.value })} />
+                <div className="citas-modal-actions">
+                  <button onClick={handleCrearAdoptante}>Guardar</button>
+                  <button onClick={() => setMostrarModalAdoptante(false)}>Cancelar</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Modal Crear Cita */}
+          {mostrarModalCita && renderCitaModal(false)}
+
+          {/* Modal Editar Cita */}
+          {mostrarModalEditar && renderCitaModal(true)}
+
+        </>
+      )}
+      {modoVista === "calendario" && (
+        <div className="citas-calendario">
+          <FullCalendar
+            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+            initialView="timeGridWeek"
+            editable={true}
+            allDaySlot={false}
+            selectable={true}
+            headerToolbar={{
+              left: "prev,next today",
+              center: "title",
+              right: "dayGridMonth,timeGridWeek,timeGridDay",
+            }}
+            buttonText={{
+              today: "Hoy",
+              month: "Mes",
+              week: "Semana",
+              day: "Día",
+            }}
+            events={citas.map((cita) => ({
+              id: cita.id,
+              title: cita.titulo,
+              start: cita.fechaHoraInicio,
+              end: cita.fechaHoraFin,
+              extendedProps: {
+                descripcion: cita.descripcion,
+                personaAdoptanteId: cita.personaAdoptanteId,
+              },
+            }))}
+            dateClick={(info) => {
+              setMostrarModalCita(true);
+              setNuevaCita({
+                ...nuevaCita,
+                fechaHoraInicio: info.date,
+                fechaHoraFin: new Date(info.date.getTime() + 30 * 60000),
+              });
+            }}
+            eventClick={(info) => {
+              const cita = citas.find((c) => c.id === parseInt(info.event.id));
+              if (cita) abrirModalEditar(cita);
+            }}
+            eventDrop={handleCitaDrop}
+            locale="es"
+            slotMinTime="08:00:00"
+            slotMaxTime="20:00:00"
+            height="auto"
+          />
+
+          {/* Modales para crear/editar en modo calendario también */}
+          {mostrarModalCita && renderCitaModal(false)}
+          {mostrarModalEditar && renderCitaModal(true)}
         </div>
       )}
-
-      {/* Modal Crear Cita */}
-      {mostrarModalCita && renderCitaModal(false)}
-
-      {/* Modal Editar Cita */}
-      {mostrarModalEditar && renderCitaModal(true)}
-
-
     </div>
   );
 }
