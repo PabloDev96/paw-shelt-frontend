@@ -4,7 +4,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "./styles/Adopciones.css";
 import { showSuccess, showError } from "../utils/alerts";
-import { generarPDF } from "../utils/generarPDF"; // Asegúrate que la ruta sea correcta
+import { generarPDF } from "../utils/generarPDF.JS"; // Asegúrate que la ruta sea correcta
 
 const FormularioAdopcion = () => {
   const [animales, setAnimales] = useState([]);
