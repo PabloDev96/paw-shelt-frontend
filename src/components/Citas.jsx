@@ -8,7 +8,7 @@ import "@fullcalendar/core/locales/es";
 import "./styles/fullcalendar-custom.css";
 
 import { IoMdPerson } from "react-icons/io";
-import { FaPencilAlt, FaTrashAlt, FaPlus } from "react-icons/fa";
+import { FaPencilAlt, FaTrashAlt, FaList, FaPlus } from "react-icons/fa";
 import { IoCalendarOutline } from "react-icons/io5";
 import { showError, showSuccess, showConfirm } from "../utils/alerts";
 import Select from "react-select";
@@ -18,7 +18,10 @@ import "./styles/Citas.css";
 import { registerLocale } from "react-datepicker";
 import es from "date-fns/locale/es";
 registerLocale("es", es);
+
+
 export default function Citas() {
+  const hoy = new Date();
   const [modoVista, setModoVista] = useState("listado"); // listado | calendario
   const [citas, setCitas] = useState([]);
   const [adoptantes, setAdoptantes] = useState([]);
@@ -30,9 +33,10 @@ export default function Citas() {
   const [busqueda, setBusqueda] = useState("");
   const [adoptanteSeleccionado, setAdoptanteSeleccionado] = useState(null);
   const [nuevoAdoptante, setNuevoAdoptante] = useState({ nombre: "", email: "", telefono: "", direccion: "" });
-  const [filtroDia, setFiltroDia] = useState("");
-  const [filtroMes, setFiltroMes] = useState("");
-  const [filtroAnio, setFiltroAnio] = useState("");
+  const [filtroDia, setFiltroDia] = useState(hoy.getDate());
+  const [filtroMes, setFiltroMes] = useState(hoy.getMonth() + 1);
+  const [filtroAnio, setFiltroAnio] = useState(hoy.getFullYear());
+
   const [errorFechaInvalida, setErrorFechaInvalida] = useState(false);
   const [mostrarModalFechaInvalida, setMostrarModalFechaInvalida] = useState(false);
 
@@ -445,7 +449,8 @@ export default function Citas() {
           className={modoVista === "listado" ? "activo" : ""}
           onClick={() => setModoVista("listado")}
         >
-          Listado
+          <FaList style={{ marginRight: "8px" }} />
+          Ver Listado
         </button>
         <button
           className={modoVista === "calendario" ? "activo" : ""}

@@ -1,0 +1,177 @@
+.listado-adopciones-container table {
+  table-layout: auto; /* ancho basado en contenido */
+  width: auto;        /* no ocupar todo el contenedor */
+  max-width: 100%;    /* pero sin salirse */
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 10px; /* solo la tabla */
+  overflow: hidden; /* para que el redondeo funcione */
+  font-size: 1rem;
+  color: var(--light);
+  background-color: var(--medium-light);
+}
+
+.listado-adopciones-container thead th,
+.listado-adopciones-container tbody td {
+  white-space: nowrap;         /* no saltos de línea */
+  padding: 8px 12px;           /* menos padding para menos ancho */
+  min-width: 60px;             /* ancho mínimo base */
+  max-width: 180px;            /* límite máximo de ancho */
+  overflow: hidden;
+  text-overflow: ellipsis;     /* corta texto largo con "..." */
+  vertical-align: middle;
+  text-align: left;
+}
+
+.listado-adopciones-container thead th {
+  font-size: 1rem;       /* tamaño de título adecuado */
+  font-weight: 600;      /* negrita */
+  background-color: var(--medium);
+  color: var(--light);
+  border-bottom: none;
+}
+
+.listado-adopciones-container tbody tr {
+  background-color: var(--medium-light);
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+  color: var(--dark);
+}
+
+.listado-adopciones-container tbody tr:hover {
+  background-color: var(--medium);
+  color: white;
+}
+
+.listado-adopciones-container tbody td {
+  color: inherit; /* toma el color del tr */
+}
+
+.listado-adopciones-container tbody tr,
+.listado-adopciones-container tbody td {
+  border-radius: 0 !important;
+}
+
+.listado-adopciones-container tbody tr:last-child td:first-child {
+  border-bottom-left-radius: 10px;
+}
+
+.listado-adopciones-container tbody tr:last-child td:last-child {
+  border-bottom-right-radius: 10px;
+}
+
+/* Anchos mínimos personalizados por columna, ajusta si quieres */
+.listado-adopciones-container thead th:nth-child(1) { min-width: 80px; }  /* Fecha */
+.listado-adopciones-container thead th:nth-child(2) { min-width: 100px; } /* Animal */
+.listado-adopciones-container thead th:nth-child(3) { min-width: 120px; } /* Adoptante */
+.listado-adopciones-container thead th:nth-child(4) { min-width: 150px; } /* Observaciones */
+.listado-adopciones-container thead th:nth-child(5) { min-width: 80px; }  /* Acciones */
+
+.listado-adopciones-container .listado-adopciones-busqueda {
+  padding: 0.5rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid var(--medium);
+  background-color: var(--light);
+  color: var(--dark);
+  font-size: 1rem;
+  width: 220px;
+  transition: border-color 0.2s ease;
+  margin-bottom: 1rem;
+}
+
+.listado-adopciones-container .listado-adopciones-busqueda:focus {
+  border-color: var(--medium-dark);
+  outline: none;
+  box-shadow: 0 0 5px var(--medium-dark);
+}
+
+.listado-adopciones-container .pagination-buttons {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: var(--dark);
+}
+
+.listado-adopciones-container .pagination-buttons button {
+  background-color: var(--medium-light);
+  border: none;
+  padding: 0.3rem 0.8rem;
+  border-radius: 6px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.listado-adopciones-container .pagination-buttons button:disabled {
+  background-color: var(--light);
+  color: var(--medium);
+  cursor: not-allowed;
+}
+
+.listado-adopciones-container .pagination-buttons button:hover:not(:disabled) {
+  background-color: var(--medium-dark);
+}
+
+.listado-adopciones-container .pagination-info {
+  margin-left: 10px;
+  color: var(--medium-dark);
+  user-select: none;
+}
+
+.listado-adopciones-container div > button {
+  background-color: var(--medium-light);
+  border: none;
+  padding: 6px 10px;
+  margin-right: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem; /* tamaño iconos */
+  color: var(--dark);
+  transition: background-color 0.2s ease;
+}
+
+.listado-adopciones-container tbody tr:hover {
+  background-color: var(--medium);
+  color: white;
+}
+
+.listado-adopciones-container tbody tr:hover button {
+  background-color: var(--medium);
+  color: var(--light);
+}
+
+.listado-adopciones-container div > button:last-child {
+  margin-right: 0;
+}
+
+.listado-adopciones-container div > button:hover {
+  background-color: inherit;
+  scale: 1.2;
+}
+
+.listado-adopciones-container .icono-accion:hover {
+  color: var(--error);
+}
+
+.filtro-columna {
+  width: 120px;
+  padding: 4px 8px;
+  font-size: 0.9rem;
+  border-radius: 6px;
+  border: 1px solid var(--medium);
+  background-color: var(--light);
+  color: var(--dark);
+  transition: border-color 0.3s ease;
+}
+
+.filtro-columna:focus {
+  outline: none;
+  border-color: var(--medium-dark);
+  box-shadow: 0 0 5px var(--medium-dark);
+}

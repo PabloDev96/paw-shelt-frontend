@@ -102,7 +102,7 @@ export const generarPDF = (animal, adoptante, fechaAdopcion, observaciones) => {
 
   // Líneas de firma
   doc.line(leftX, yStart, leftX + 70, yStart);
-  doc.line(rightX + 15, yStart, rightX + 85, yStart); // movido 15 px a la derecha
+  doc.line(rightX + 15, yStart, rightX + 85, yStart);
 
   yStart += 8;
 
@@ -110,9 +110,9 @@ export const generarPDF = (animal, adoptante, fechaAdopcion, observaciones) => {
   doc.setFont("helvetica", "normal");
 
   // Centro para representante
-  const leftCenter = leftX + 35;  // mitad de 70
+  const leftCenter = leftX + 35;
 
-  // Centro para adoptante (línea movida +15, ancho 70)
+  // Centro para adoptante
   const rightCenter = rightX + 15 + 35;
 
   doc.text("Representante de PawShelt", leftCenter, yStart, { align: "center" });
