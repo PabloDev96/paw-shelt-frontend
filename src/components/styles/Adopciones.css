@@ -54,7 +54,7 @@
 
 .formulario-adopcion {
   background-color: white;
-  padding: 2rem;
+  padding: 1rem 2rem 2rem 2rem;
   border-radius: 10px;
   width: 100%;
   max-width: 500px;
@@ -109,4 +109,14 @@
   filter: brightness(1.1);
 }
 
+.adopciones-row {
+  display: flex;
+  gap: 1rem; /* espacio entre selects */
+}
+
+.adopciones-field {
+  flex: 1; /* que cada uno ocupe la mitad */
+  display: flex;
+  flex-direction: column;
+}
     

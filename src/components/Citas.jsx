@@ -468,6 +468,7 @@ export default function Citas() {
           <div className="citas-filtros">
             <Select
               options={dias}
+              value={dias.find((d) => d.value === filtroDia) || null}
               onChange={(option) => setFiltroDia(option?.value || "")}
               placeholder="Día"
               isClearable
@@ -476,6 +477,7 @@ export default function Citas() {
             />
             <Select
               options={meses}
+              value={meses.find((m) => m.value === filtroMes) || null}
               onChange={(option) => setFiltroMes(option?.value || "")}
               placeholder="Mes"
               isClearable
@@ -484,6 +486,7 @@ export default function Citas() {
             />
             <Select
               options={anios}
+              value={anios.find((a) => a.value === filtroAnio) || null}
               onChange={(option) => setFiltroAnio(option?.value || "")}
               placeholder="Año"
               isClearable

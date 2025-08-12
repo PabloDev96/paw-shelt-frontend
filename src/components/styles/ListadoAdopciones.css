@@ -160,7 +160,7 @@
 }
 
 .filtro-columna {
-  width: 120px;
+  width: 97px;
   padding: 4px 8px;
   font-size: 0.9rem;
   border-radius: 6px;
@@ -174,4 +174,14 @@
   outline: none;
   border-color: var(--medium-dark);
   box-shadow: 0 0 5px var(--medium-dark);
+}
+
+/* Filtro de Animal */
+.filtro-animalNombre {
+  width: 290px;
+}
+
+/* Filtro de Adoptante */
+.filtro-adoptanteNombre {
+  width: 290px;
 }

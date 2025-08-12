@@ -170,7 +170,7 @@ export default function ListadoAdopciones() {
       {
         header: "Observaciones",
         accessorKey: "observaciones",
-        enableColumnFilter: true,
+        enableColumnFilter: false,
       },
       {
         header: "Acciones",
@@ -198,6 +198,11 @@ export default function ListadoAdopciones() {
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    initialState: {
+      pagination: {
+        pageSize: 8, // Solo 8 filas por página
+      },
+    },
   });
 
   if (loading) return <p>Cargando adopciones...</p>;
@@ -221,13 +226,11 @@ export default function ListadoAdopciones() {
                   )}
                   {/* Para columnas que no sean fecha, el input filtro a la derecha */}
                   {header.column.id !== "fechaAdopcion" &&
-                  header.column.getCanFilter() ? (
+                    header.column.getCanFilter() ? (
                     <div className="header-filtro-contenedor">
-                      <span style={{ flex: "1 0 auto" }}>
-                        {/* Vacio para alinear con título */}
-                      </span>
+                      <span style={{ flex: "1 0 auto" }}></span>
                       <input
-                        className="filtro-columna"
+                        className={`filtro-columna filtro-${header.column.id}`}
                         value={header.column.getFilterValue() ?? ""}
                         onChange={(e) =>
                           header.column.setFilterValue(e.target.value)

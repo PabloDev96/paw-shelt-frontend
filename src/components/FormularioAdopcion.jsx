@@ -49,7 +49,7 @@ const FormularioAdopcion = () => {
     e.preventDefault();
 
     if (!animalSeleccionado || !adoptanteSeleccionado || !fechaAdopcion) {
-      return showError("Campos obligatorios", "Seleccioná animal, adoptante y fecha.");
+      return showError("Campos obligatorios", "Selecciona animal, adoptante y fecha.");
     }
 
     const body = {
@@ -90,25 +90,32 @@ const FormularioAdopcion = () => {
     <form onSubmit={handleSubmit} className="formulario-adopcion">
       <h3>Nueva Adopción</h3>
 
-      <label>Animal</label>
-      <Select
-        options={animales.map((a) => ({ value: a.id, label: a.nombre }))}
-        value={animalSeleccionado}
-        onChange={setAnimalSeleccionado}
-        placeholder="Seleccionar animal..."
-        className="adopciones-select"
-        classNamePrefix="adopciones"
-      />
+      <div className="adopciones-row">
+        <div className="adopciones-field">
+          <label>Animal</label>
+          <Select
+            options={animales.map((a) => ({ value: a.id, label: a.nombre }))}
+            value={animalSeleccionado}
+            onChange={setAnimalSeleccionado}
+            placeholder="Seleccionar animal..."
+            className="adopciones-select"
+            classNamePrefix="adopciones"
+          />
+        </div>
 
-      <label>Adoptante</label>
-      <Select
-        options={adoptantes.map((p) => ({ value: p.id, label: p.nombre }))}
-        value={adoptanteSeleccionado}
-        onChange={setAdoptanteSeleccionado}
-        placeholder="Seleccionar adoptante..."
-        className="adopciones-select"
-        classNamePrefix="adopciones"
-      />
+        <div className="adopciones-field">
+          <label>Adoptante</label>
+          <Select
+            options={adoptantes.map((p) => ({ value: p.id, label: p.nombre }))}
+            value={adoptanteSeleccionado}
+            onChange={setAdoptanteSeleccionado}
+            placeholder="Seleccionar adoptante..."
+            className="adopciones-select"
+            classNamePrefix="adopciones"
+          />
+        </div>
+      </div>
+
 
       <label>Fecha de adopción</label>
       <DatePicker
