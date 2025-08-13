@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
+import { showConfirm, showSuccess, showError } from "../utils/alerts";
 import { FaTrashAlt } from "react-icons/fa";
 import { FaRegFilePdf } from "react-icons/fa6";
 import "./styles/ListadoAdopciones.css";
@@ -15,6 +16,7 @@ export default function ListadoAdopciones() {
   const [adopciones, setAdopciones] = useState([]);
   const [loading, setLoading] = useState(true);
   const [columnFilters, setColumnFilters] = useState([]);
+  const [deletingIds, setDeletingIds] = useState(new Set());
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -63,16 +65,48 @@ export default function ListadoAdopciones() {
   };
 
   const handleEliminarAdopcion = async (id) => {
-    if (!window.confirm("¿Eliminar esta adopción?")) return;
-    const token = localStorage.getItem("token");
-    const res = await fetch(`http://localhost:8080/adopciones/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) {
-      setAdopciones(adopciones.filter((a) => a.id !== id));
-    } else {
-      alert("Error al eliminar adopción");
+    // Confirmación
+    const { isConfirmed } = await showConfirm(
+      "¿Eliminar adopción?",
+      "Esta acción no se puede deshacer."
+    );
+    if (!isConfirmed) return;
+
+    try {
+      setDeletingIds((prev) => new Set(prev).add(id));
+
+      const token = localStorage.getItem("token");
+      const res = await fetch(`http://localhost:8080/adopciones/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.ok) {
+        // 204 No Content o 200 OK
+        setAdopciones((prev) => prev.filter((a) => a.id !== id));
+        await showSuccess("Eliminado", "La adopción se eliminó correctamente.");
+      } else {
+        // Intenta leer el cuerpo para mensaje más útil
+        let detalle = "";
+        try { detalle = await res.text(); } catch (_) { }
+        const msgPorEstado =
+          res.status === 403 ? "No tienes permisos para eliminar."
+            : res.status === 404 ? "La adopción no existe o ya fue eliminada."
+              : res.status === 409 ? "No se puede eliminar por una restricción."
+                : "Intenta nuevamente en unos segundos.";
+        await showError(
+          `Error ${res.status}`,
+          detalle?.trim() ? detalle : msgPorEstado
+        );
+      }
+    } catch (err) {
+      await showError("Error inesperado", err?.message ?? "Fallo de red.");
+    } finally {
+      setDeletingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     }
   };
 

@@ -69,12 +69,18 @@ const FormularioAdopcion = () => {
     });
 
     if (res.ok) {
-      showSuccess("Adopción registrada");
-
       const animalInfo = animales.find((a) => a.id === animalSeleccionado.value);
       const adoptanteInfo = adoptantes.find((a) => a.id === adoptanteSeleccionado.value);
 
-      generarPDF(animalInfo, adoptanteInfo, fechaAdopcion, observaciones);
+      // ➊ Muestra el alert y espera a que termine el timer
+      await showSuccess(
+        "¡Adopción registrada!",
+        `${animalInfo?.nombre} → ${adoptanteInfo?.nombre} (${fechaAdopcion.toLocaleDateString("es-ES")})`,
+        1800 // <- duración del alert
+      );
+
+      // ➋ Cuando el alert se cierra, generamos/abrimos el PDF en nueva pestaña
+      generarPDF(animalInfo, adoptanteInfo, fechaAdopcion, observaciones, { openInNewTab: true });
 
       // Limpiar formulario
       setAnimalSeleccionado(null);
@@ -82,7 +88,9 @@ const FormularioAdopcion = () => {
       setFechaAdopcion(null);
       setObservaciones("");
     } else {
-      showError("Error", "No se pudo registrar la adopción");
+      let detalle = "";
+      try { detalle = await res.text(); } catch { }
+      showError("Error", detalle?.trim() || "No se pudo registrar la adopción");
     }
   };
 
