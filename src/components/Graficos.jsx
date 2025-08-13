@@ -16,21 +16,6 @@ import {
 } from "recharts";
 import Select from "react-select";
 
-/**
- * Componente: Graficos
- * -------------------------------------------------------
- * Muestra un panel de métricas con filtros de periodo y 4 bloques:
- * 1) Adopciones (semana/mes/año)
- * 2) Citas al refugio (semana/mes/año)
- * 3) Nuevos animales (gatos vs perros) (semana/mes/año)
- * 4) Distribución de edad (barras) y sexo (tarta)
- *
- * Cómo integrarlo:
- * - Añade la ruta /dashboard/graficos para este componente.
- * - Añade un botón en tu dashboard principal que haga navigate("/dashboard/graficos").
- * - Asegúrate de tener disponible el backend o deja el mock activado.
- */
-
 const API_BASE = "http://localhost:8080";
 
 const opcionesPeriodo = [
@@ -39,7 +24,7 @@ const opcionesPeriodo = [
   { value: "anio", label: "Último año" },
 ];
 
-const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff7d7d", "#8dd1e1", "#a4de6c"]; // pie chart
+const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff7d7d", "#8dd1e1", "#a4de6c"];
 
 export default function Graficos() {
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
@@ -47,14 +32,13 @@ export default function Graficos() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [data, setData] = useState({
-    adopciones: [], // [{ fecha: '2025-08-01', cantidad: 3 }]
-    citas: [], // idem
-    nuevosAnimales: [], // [{ fecha, gatos, perros }]
-    edades: [], // [{ bucket: '0-1', cantidad: 12 }, ...]
-    sexo: [], // [{ categoria: 'Macho', cantidad: 20 }, { categoria: 'Hembra', cantidad: 25 }]
+    adopciones: [],
+    citas: [],
+    nuevosAnimales: [],
+    edades: [],
+    sexo: [],
   });
 
-  // ---- Fetch al backend (si está disponible). Fallback a mock si falla. ----
   useEffect(() => {
     let cancel = false;
     async function load() {
@@ -67,7 +51,6 @@ export default function Graficos() {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
         if (!cancel) {
-          // Espera llaves: adopciones, citas, nuevosAnimales, edades, sexo
           setData({
             adopciones: json.adopciones || [],
             citas: json.citas || [],
@@ -91,7 +74,6 @@ export default function Graficos() {
     };
   }, [periodo, token]);
 
-  // ---- Helpers visuales ----
   const tituloPeriodo = useMemo(() => {
     switch (periodo) {
       case "semana":
@@ -102,6 +84,22 @@ export default function Graficos() {
         return "(último mes)";
     }
   }, [periodo]);
+
+  // ---- Comparativa: fusiona adopciones y citas por fecha ----
+  const comparativa = useMemo(() => {
+    const map = new Map();
+    (data.adopciones || []).forEach((d) => {
+      const k = d.fecha;
+      map.set(k, { fecha: k, adopciones: Number(d.cantidad) || 0, citas: 0 });
+    });
+    (data.citas || []).forEach((d) => {
+      const k = d.fecha;
+      const prev = map.get(k) || { fecha: k, adopciones: 0, citas: 0 };
+      prev.citas = Number(d.cantidad) || 0;
+      map.set(k, prev);
+    });
+    return Array.from(map.values());
+  }, [data]);
 
   return (
     <div className="graficos-wrapper" style={{ padding: 16 }}>
@@ -126,35 +124,22 @@ export default function Graficos() {
       )}
 
       <div className="graficos-grid" style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16 }}>
-        {/* 1) Adopciones */}
-        <ChartCard title="Adopciones">
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={data.adopciones} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+        {/* 1) Adopciones vs Citas en un mismo gráfico */}
+        <ChartCard title="Adopciones vs Citas">
+          <ResponsiveContainer width="100%" height={320}>
+            <LineChart data={comparativa} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="fecha" />
               <YAxis allowDecimals={false} />
               <ReTooltip />
               <Legend />
-              <Line type="monotone" dataKey="cantidad" name="Adopciones" stroke="#4dabf7" dot={false} />
+              <Line type="monotone" dataKey="adopciones" name="Adopciones" stroke="#4dabf7" dot={false} strokeWidth={2} />
+              <Line type="monotone" dataKey="citas" name="Citas" stroke="#8884d8" dot={false} strokeWidth={2} />
             </LineChart>
           </ResponsiveContainer>
         </ChartCard>
 
-        {/* 2) Citas al refugio */}
-        <ChartCard title="Citas al refugio">
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={data.citas} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="fecha" />
-              <YAxis allowDecimals={false} />
-              <ReTooltip />
-              <Legend />
-              <Line type="monotone" dataKey="cantidad" name="Citas" stroke="#8884d8" dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
-        {/* 3) Nuevos animales (apilado gatos/perros) */}
+        {/* 2) Nuevos animales (apilado gatos/perros) */}
         <ChartCard title="Nuevos animales (gatos/perros)">
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={data.nuevosAnimales} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
@@ -169,7 +154,7 @@ export default function Graficos() {
           </ResponsiveContainer>
         </ChartCard>
 
-        {/* 4) Edad (barras) + Sexo (tarta) */}
+        {/* 3) Edad (barras) + Sexo (tarta) */}
         <div className="graficos-duo" style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16 }}>
           <ChartCard title="Distribución de edades (años)">
             <ResponsiveContainer width="100%" height={300}>
@@ -200,14 +185,12 @@ export default function Graficos() {
         </div>
       </div>
 
-      {/* Loading overlay simple */}
       {loading && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(255,255,255,0.6)", display: "grid", placeItems: "center" }}>
           <div style={{ padding: 12, borderRadius: 10, background: "white", boxShadow: "0 4px 14px rgba(0,0,0,.12)" }}>Cargando…</div>
         </div>
       )}
 
-      {/* Estilos mínimos para tarjetas / grid responsive */}
       <style>{`
         .chart-card { background: #fff; border: 1px solid #eaeaea; border-radius: 14px; padding: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.04); }
         .chart-card h3 { margin: 0 0 8px 0; font-size: 16px; }
@@ -229,7 +212,6 @@ function ChartCard({ title, children }) {
   );
 }
 
-// ---- MOCK de datos para ver el diseño sin backend ----
 function makeMock(periodo) {
   const points = periodo === "semana" ? 7 : periodo === "anio" ? 12 : 30;
   const hoy = new Date();
@@ -244,9 +226,11 @@ function makeMock(periodo) {
     if (periodo === "mes") d.setDate(hoy.getDate() - i);
     if (periodo === "anio") d.setMonth(hoy.getMonth() - i);
 
-    adopciones.push({ fecha: periodo === "anio" ? d.toLocaleString("es-ES", { month: "short", year: "2-digit" }) : fmt(d), cantidad: rnd(0, 6) });
-    citas.push({ fecha: periodo === "anio" ? d.toLocaleString("es-ES", { month: "short", year: "2-digit" }) : fmt(d), cantidad: rnd(1, 10) });
-    nuevosAnimales.push({ fecha: periodo === "anio" ? d.toLocaleString("es-ES", { month: "short", year: "2-digit" }) : fmt(d), gatos: rnd(0, 5), perros: rnd(0, 5) });
+    const etiqueta = periodo === "anio" ? d.toLocaleString("es-ES", { month: "short", year: "2-digit" }) : fmt(d);
+
+    adopciones.push({ fecha: etiqueta, cantidad: rnd(0, 6) });
+    citas.push({ fecha: etiqueta, cantidad: rnd(1, 10) });
+    nuevosAnimales.push({ fecha: etiqueta, gatos: rnd(0, 5), perros: rnd(0, 5) });
   }
 
   const edades = [
