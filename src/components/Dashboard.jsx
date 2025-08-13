@@ -3,7 +3,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import "./styles/Dashboard.css";
 import { LuDog } from "react-icons/lu";
 import { IoCalendarOutline, IoLogOutOutline } from "react-icons/io5";
-import { MdEuro, MdPersonAdd } from "react-icons/md";
+import { MdEuro, MdPersonAdd, MdOutlineQueryStats } from "react-icons/md";
 import { Tooltip } from "react-tooltip";
 import { showWelcomeDashboard } from "../utils/alerts";
 
@@ -18,8 +18,6 @@ export default function Dashboard() {
       localStorage.removeItem("showLoginSuccess");
     }
   }, []);
-
-
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -50,15 +48,23 @@ export default function Dashboard() {
           {user?.rol === "ADMIN" && (
             <>
               <NavLink to="/adopciones" data-tooltip-id="tooltip" data-tooltip-content="Adopciones">
-                <img src="/public/icons/adopcion.png"
+                <img
+                  src="/public/icons/adopcion.png"
                   alt="Adopciones"
                   style={{
                     width: "38px",
                     height: "38px",
-                    filter: "invert(72%) sepia(16%) saturate(521%) hue-rotate(79deg) brightness(94%) contrast(85%)",
+                    filter:
+                      "invert(72%) sepia(16%) saturate(521%) hue-rotate(79deg) brightness(94%) contrast(85%)",
                   }}
                 />
               </NavLink>
+
+              {/* Botón para ver gráficos/estadísticas */}
+              <NavLink to="/graficos" data-tooltip-id="tooltip" data-tooltip-content="Estadísticas">
+                <MdOutlineQueryStats />
+              </NavLink>
+
               <NavLink to="/crear-usuario" data-tooltip-id="tooltip" data-tooltip-content="Crear usuario">
                 <MdPersonAdd />
               </NavLink>

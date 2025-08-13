@@ -9,6 +9,7 @@ import Animales from "./components/Animales";
 import Citas from "./components/Citas";
 import CrearUsuario from "./components/CrearUsuario";
 import Adopciones from "./components/Adopciones";
+import Graficos from "./components/Graficos";
 
 
 function App() {
@@ -35,6 +36,14 @@ function App() {
             element={
               <RutaProtegida rolRequerido="ADMIN">
                 <Adopciones />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="graficos"
+            element={
+              <RutaProtegida rolRequerido="ADMIN">
+                <Graficos />
               </RutaProtegida>
             }
           />
