@@ -36,6 +36,7 @@ export default function Citas() {
   const [filtroDia, setFiltroDia] = useState(hoy.getDate());
   const [filtroMes, setFiltroMes] = useState(hoy.getMonth() + 1);
   const [filtroAnio, setFiltroAnio] = useState(hoy.getFullYear());
+  const [mostrarSubformAdoptante, setMostrarSubformAdoptante] = useState(false);
 
   const [errorFechaInvalida, setErrorFechaInvalida] = useState(false);
   const [mostrarModalFechaInvalida, setMostrarModalFechaInvalida] = useState(false);
@@ -72,6 +73,7 @@ export default function Citas() {
     });
     const data = await res.json();
     setAdoptantes(data);
+    return data;
   };
 
   const handleCitaDrop = async (info) => {
@@ -87,7 +89,7 @@ export default function Citas() {
     // Validación: evitar solapamiento con otras citas (excluyendo esta)
     if (haySolapamiento(nuevaFechaInicio, nuevaFechaFin, id)) {
       showError("Conflicto de cita", "Ya existe una cita en ese horario.");
-      info.revert(); // Revierte el movimiento
+      info.revert();
       return;
     }
 
@@ -144,9 +146,21 @@ export default function Citas() {
     });
 
     if (res.ok) {
-      setMostrarModalAdoptante(false);
       setNuevoAdoptante({ nombre: "", email: "", telefono: "", direccion: "" });
-      fetchAdoptantes();
+
+      // refresca y selecciona automáticamente al recién creado
+      const lista = await fetchAdoptantes();
+      const recienCreado = lista.find((a) => a.email === email);
+      if (recienCreado) {
+        setAdoptanteSeleccionado(recienCreado);
+      }
+
+      // cierra el subform interno si estaba abierto
+      setMostrarSubformAdoptante(false);
+
+      // cierra el modal independiente si estabas usándolo
+      setMostrarModalAdoptante(false);
+
       showSuccess("Adoptante creado correctamente");
     } else {
       showError("Error al crear adoptante", "Revisa los datos o el servidor.");
@@ -194,7 +208,6 @@ export default function Citas() {
       return showError("Fechas no válidas", "La fecha de fin debe ser posterior a la de inicio.");
     }
 
-    // ✅ Validación de solapamiento
     if (haySolapamiento(inicio, fin)) {
       return showError("Conflicto de cita", "Ya existe una cita en ese horario.");
     }
@@ -259,7 +272,6 @@ export default function Citas() {
       return showError("Fechas no válidas", "La fecha de fin debe ser posterior a la de inicio.");
     }
 
-    // ✅ Validación de solapamiento (ignorando su propio ID)
     if (haySolapamiento(inicio, fin, citaAEditar.id)) {
       return showError("Conflicto de cita", "Ya existe una cita en ese horario.");
     }
@@ -366,23 +378,71 @@ export default function Citas() {
       <div className="citas-modal">
         <h3>{modoEditar ? "Editar Cita" : "Nueva Cita"}</h3>
 
-        <Select
-          className="citas-select"
-          classNamePrefix="citas"
-          options={adoptantes.map((a) => ({ value: a.id, label: a.nombre }))}
-          onChange={(selectedOption) =>
-            setAdoptanteSeleccionado(
-              adoptantes.find((a) => a.id === selectedOption?.value)
-            )
-          }
-          value={
-            adoptanteSeleccionado
-              ? { value: adoptanteSeleccionado.id, label: adoptanteSeleccionado.nombre }
-              : null
-          }
-          placeholder="Seleccionar adoptante..."
-          isClearable
-        />
+        <div className="citas-row">
+          <div style={{ flex: 1 }}>
+            <Select
+              className="citas-select"
+              classNamePrefix="citas"
+              options={adoptantes.map((a) => ({ value: a.id, label: a.nombre }))}
+              onChange={(selectedOption) =>
+                setAdoptanteSeleccionado(
+                  adoptantes.find((a) => a.id === selectedOption?.value)
+                )
+              }
+              value={
+                adoptanteSeleccionado
+                  ? { value: adoptanteSeleccionado.id, label: adoptanteSeleccionado.nombre }
+                  : null
+              }
+              placeholder="Seleccionar adoptante..."
+              isClearable
+            />
+          </div>
+
+          {/* Botón alineado con el select */}
+          <button
+            type="button"
+            className="citas-btn citas-btn-inline"
+            onClick={() => setMostrarSubformAdoptante((v) => !v)}
+            title="Añadir adoptante"
+          >
+            <FaPlus />
+            <IoMdPerson className="citas-icon" />
+          </button>
+        </div>
+
+        {/* Subformulario inline */}
+        {mostrarSubformAdoptante && (
+          <div className="citas-subform-adoptante">
+            <h4>Nuevo adoptante</h4>
+            <div className="citas-subform-grid">
+              <input
+                placeholder="Nombre"
+                value={nuevoAdoptante.nombre}
+                onChange={(e) => setNuevoAdoptante({ ...nuevoAdoptante, nombre: e.target.value })}
+              />
+              <input
+                placeholder="Email"
+                value={nuevoAdoptante.email}
+                onChange={(e) => setNuevoAdoptante({ ...nuevoAdoptante, email: e.target.value })}
+              />
+              <input
+                placeholder="Teléfono"
+                value={nuevoAdoptante.telefono}
+                onChange={(e) => setNuevoAdoptante({ ...nuevoAdoptante, telefono: e.target.value })}
+              />
+              <input
+                placeholder="Dirección"
+                value={nuevoAdoptante.direccion}
+                onChange={(e) => setNuevoAdoptante({ ...nuevoAdoptante, direccion: e.target.value })}
+              />
+            </div>
+            <div className="citas-modal-actions">
+              <button type="button" onClick={handleCrearAdoptante}>Guardar adoptante</button>
+              <button type="button" onClick={() => setMostrarSubformAdoptante(false)}>Cancelar</button>
+            </div>
+          </div>
+        )}
 
         <DatePicker
           selected={nuevaCita.fechaHoraInicio ? new Date(nuevaCita.fechaHoraInicio) : null}
@@ -413,6 +473,7 @@ export default function Citas() {
           value={nuevaCita.descripcion}
           onChange={(e) => setNuevaCita({ ...nuevaCita, descripcion: e.target.value })}
         />
+
         <div className="citas-modal-actions">
           <button onClick={modoEditar ? handleActualizarCita : handleCrearCita}>Guardar</button>
           <button
@@ -420,6 +481,7 @@ export default function Citas() {
               modoEditar ? setMostrarModalEditar(false) : setMostrarModalCita(false);
               setCitaAEditar(null);
               resetCitaForm();
+              setMostrarSubformAdoptante(false);
             }}
           >
             Cancelar
@@ -496,15 +558,6 @@ export default function Citas() {
           </div>
 
           <div className="citas-acciones">
-            <button
-              className="citas-btn"
-              onClick={() => setMostrarModalAdoptante(true)}
-              data-tooltip-id="tooltip"
-              data-tooltip-content="Crear Ficha Adoptante"
-            >
-              <FaPlus />
-              <IoMdPerson className="citas-icon" />
-            </button>
             <button
               className="citas-btn"
               onClick={() => setMostrarModalCita(true)}
