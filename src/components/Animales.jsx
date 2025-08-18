@@ -549,4 +549,4 @@ export default function Animales() {
             <Tooltip id="tooltip" place="top" />
         </div>
     );
-}
+}   

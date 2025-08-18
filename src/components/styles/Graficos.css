@@ -1,0 +1,32 @@
+.chart-card {
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  background: white;
+}
+
+.charts-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+@media (min-width: 768px) {
+  .charts-container {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.quesos-grid {
+  display: grid;
+  grid-template-columns: 1fr;  /* en móvil se ponen uno debajo del otro */
+  gap: 16px;
+  margin-top: 20px;
+}
+
+@media (min-width: 700px) {
+  .quesos-grid {
+    grid-template-columns: 1fr 1fr; /* en pantallas grandes, lado a lado */
+  }
+}

@@ -158,3 +158,13 @@
     font-size: 0.65rem;
   }
 }
+
+.dashboard-nav .nav-img-icon {
+  width: 1em;
+  height: 1em;
+  aspect-ratio: 1 / 1;
+  display: block;
+  object-fit: contain;
+  pointer-events: none;
+  filter: invert(72%) sepia(16%) saturate(521%) hue-rotate(79deg) brightness(94%) contrast(85%);
+}
