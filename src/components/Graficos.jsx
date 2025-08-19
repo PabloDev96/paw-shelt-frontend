@@ -16,7 +16,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import Select from "react-select";
-import { API_URL } from "../utils/config";
+import { API_URL } from "../utils/config.js";
 
 
 const opcionesPeriodo = [

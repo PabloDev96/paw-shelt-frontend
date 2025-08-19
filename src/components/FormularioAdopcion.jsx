@@ -5,7 +5,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import "./styles/Adopciones.css";
 import { showSuccess, showError } from "../utils/alerts";
 import { generarPDF } from "../utils/generatePDF.js";
-import { API_URL } from "../utils/config";
+import { API_URL } from "../utils/config.js";
 
 const FormularioAdopcion = () => {
   const [animales, setAnimales] = useState([]);

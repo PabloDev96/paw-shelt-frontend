@@ -8,7 +8,7 @@ import { FaCircleInfo } from "react-icons/fa6";
 import { IoClose } from "react-icons/io5";
 import { MdMale, MdFemale } from "react-icons/md";
 import { Tooltip } from "react-tooltip";
-import { API_URL } from "../utils/config";
+import { API_URL } from "../utils/config.js";
 
 const formatearEnum = (valor) => {
     const reemplazos = {
