@@ -11,6 +11,7 @@ import {
   flexRender,
 } from "@tanstack/react-table";
 import { generarPDF } from "../utils/generatePDF.js";
+import { API_URL } from "../utils/config";
 
 export default function ListadoAdopciones() {
   const [adopciones, setAdopciones] = useState([]);

@@ -17,6 +17,8 @@ import "react-datepicker/dist/react-datepicker.css";
 import "./styles/Citas.css";
 import { registerLocale } from "react-datepicker";
 import es from "date-fns/locale/es";
+import { API_URL } from "../utils/config";
+
 registerLocale("es", es);
 
 

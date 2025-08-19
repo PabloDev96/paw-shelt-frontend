@@ -4,6 +4,7 @@ import ListadoAdopciones from "./ListadoAdopciones";
 import { FaPlus, FaList } from "react-icons/fa";
 import "./styles/Citas.css"; // Reutilizamos el CSS de Citas
 
+
 export default function Adopciones() {
   const [modoVista, setModoVista] = useState("listado");
 

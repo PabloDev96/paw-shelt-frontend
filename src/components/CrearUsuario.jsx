@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import "./styles/CrearUsuario.css";
 import { showSuccess, showError } from "../utils/alerts";
 import { useNavigate } from "react-router-dom";
+import { API_URL } from "../utils/config";
 
 export default function CrearUsuario() {
     const navigate = useNavigate();
