@@ -1,6 +1,6 @@
 import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import './App.css';
+import { BrowserRouter, HashRouter, Routes, Route } from "react-router-dom";
+import "./App.css";
 
 import RutaProtegida from "./components/RutaProtegida";
 import Login from "./components/Login";
@@ -11,10 +11,12 @@ import CrearUsuario from "./components/CrearUsuario";
 import Adopciones from "./components/Adopciones";
 import Graficos from "./components/Graficos";
 
-
 function App() {
+  // En dev (vite dev) -> BrowserRouter; en producción (Vercel) -> HashRouter
+  const Router = import.meta.env.MODE === "production" ? HashRouter : BrowserRouter;
+
   return (
-    <BrowserRouter>
+    <Router>
       <Routes>
         {/* Ruta pública */}
         <Route path="/" element={<Login />} />
@@ -57,7 +59,7 @@ function App() {
           />
         </Route>
       </Routes>
-    </BrowserRouter>
+    </Router>
   );
 }
 
