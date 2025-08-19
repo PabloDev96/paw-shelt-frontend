@@ -1,0 +1,7 @@
+<!doctype html><meta charset="utf-8">
+<script>
+  // Guarda la URL real que se recargó (p. ej. /adopciones/123)
+  sessionStorage.redirect = location.pathname + location.search + location.hash;
+  // Vuelve a la raíz, donde existe index.html
+  location.replace("/");
+</script>
