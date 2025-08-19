@@ -10,7 +10,7 @@ import {
   getFilteredRowModel,
   flexRender,
 } from "@tanstack/react-table";
-import { generarPDF } from "../utils/generarPDF.JS";
+import { generarPDF } from "../utils/generatePDF.js";
 
 export default function ListadoAdopciones() {
   const [adopciones, setAdopciones] = useState([]);
