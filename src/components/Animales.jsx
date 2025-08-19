@@ -3,6 +3,7 @@ import "./styles/Animales.css";
 import { showSuccess, showError, showConfirm } from "../utils/alerts";
 import { useNavigate } from "react-router-dom";
 import { FaPencilAlt, FaTrashAlt, FaDog, FaCat, FaPlus } from "react-icons/fa";
+import { LuImagePlus } from "react-icons/lu";
 import { FaCircleInfo } from "react-icons/fa6";
 import { IoClose } from "react-icons/io5";
 import { MdMale, MdFemale } from "react-icons/md";
@@ -43,11 +44,12 @@ export default function Animales() {
         fotoPerfilUrl: "",
     });
 
+
+    const [fotoFile, setFotoFile] = useState(null);
+    const [previewFoto, setPreviewFoto] = useState("");
+
     const [filtroPrincipal, setFiltroPrincipal] = useState("TODOS");
-    const [filtrosSecundarios, setFiltrosSecundarios] = useState({
-        sexo: null,
-        etapa: null,
-    });
+    const [filtrosSecundarios, setFiltrosSecundarios] = useState({ sexo: null, etapa: null });
 
     const subfiltrosRef = useRef(null);
     const filtroRef = useRef(null);
@@ -72,23 +74,12 @@ export default function Animales() {
                 setSubfiltrosVisibles(false);
             }
         };
-
-        if (subfiltrosVisibles) {
-            document.addEventListener("mousedown", handleClickOutside);
-        }
-
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-        };
+        if (subfiltrosVisibles) document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [subfiltrosVisibles]);
 
     useLayoutEffect(() => {
-        if (
-            subfiltrosVisibles &&
-            botonFiltroRef &&
-            botonFiltroRef.current &&
-            filtroRef.current
-        ) {
+        if (subfiltrosVisibles && botonFiltroRef && botonFiltroRef.current && filtroRef.current) {
             const rect = botonFiltroRef.current.getBoundingClientRect();
             const centerX = rect.left + rect.width / 2;
             const containerRect = filtroRef.current.getBoundingClientRect();
@@ -104,10 +95,10 @@ export default function Animales() {
                 navigate("/");
                 return;
             }
-
-            const endpoint = tipo && tipo !== "TODOS"
-                ? `http://localhost:8080/animales/tipo/${tipo}`
-                : `http://localhost:8080/animales`;
+            const endpoint =
+                tipo && tipo !== "TODOS"
+                    ? `http://localhost:8080/animales/tipo/${tipo}`
+                    : `http://localhost:8080/animales`;
 
             const response = await fetch(endpoint, {
                 headers: { Authorization: `Bearer ${token}` },
@@ -128,7 +119,6 @@ export default function Animales() {
             setBotonFiltroRef(ref);
             return;
         }
-
         if (filtroPrincipal === tipo && subfiltrosVisibles) {
             setSubfiltrosVisibles(false);
             setFiltroPrincipal(null);
@@ -136,7 +126,6 @@ export default function Animales() {
             fetchAnimales();
             return;
         }
-
         setSubfiltrosVisibles(true);
         setFiltroPrincipal(tipo);
         setFiltrosSecundarios({ sexo: null, etapa: null });
@@ -164,6 +153,8 @@ export default function Animales() {
             estado: "EN_ADOPCION",
             fotoPerfilUrl: "",
         });
+        setFotoFile(null);
+        setPreviewFoto("");
         setModoEdicion(false);
         setMostrarModal(true);
     };
@@ -171,6 +162,8 @@ export default function Animales() {
     const abrirModalEditar = (animal) => {
         setNuevoAnimal({ ...animal });
         setAnimalEditandoId(animal.id);
+        setFotoFile(null);
+        setPreviewFoto(animal.fotoPerfilUrl || "");
         setModoEdicion(true);
         setMostrarModal(true);
     };
@@ -180,49 +173,82 @@ export default function Animales() {
         setMostrarModalInfo(true);
     };
 
+
+    async function subirFotoAnimal(id, file) {
+        const token = localStorage.getItem("token");
+        const form = new FormData();
+        form.append("foto", file);
+        const res = await fetch(`http://localhost:8080/animales/${id}/foto`, {
+            method: "PUT",
+            headers: { Authorization: `Bearer ${token}` },
+            body: form,
+        });
+        if (!res.ok) throw new Error("Error subiendo foto");
+        return res.json(); // devuelve AnimalDTO actualizado
+    }
+
     const handleGuardarAnimal = async (e) => {
         e.preventDefault();
-
         const token = localStorage.getItem("token");
-        const url = modoEdicion
-            ? `http://localhost:8080/animales/${animalEditandoId}`
-            : `http://localhost:8080/animales`;
-
-        const method = modoEdicion ? "PUT" : "POST";
 
         try {
-            const response = await fetch(url, {
-                method,
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify(nuevoAnimal),
-            });
-
-            if (!response.ok) {
-                throw new Error("Error al guardar el animal");
-            }
-
-            const actualizado = await response.json();
-
             if (modoEdicion) {
-                setAnimales((prev) =>
-                    prev.map((a) => (a.id === animalEditandoId ? actualizado : a))
-                );
+                const resUpd = await fetch(`http://localhost:8080/animales/${animalEditandoId}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(nuevoAnimal),
+                });
+                if (!resUpd.ok) throw new Error("Error actualizando el animal");
+                let actualizado = await resUpd.json();
+
+                if (fotoFile) {
+                    actualizado = await subirFotoAnimal(animalEditandoId, fotoFile);
+                }
+
+                setAnimales((prev) => prev.map((a) => (a.id === animalEditandoId ? actualizado : a)));
                 showSuccess("Animal actualizado", `${actualizado.nombre} fue editado correctamente.`);
             } else {
-                setAnimales((prev) => [...prev, actualizado]);
-                showSuccess("Animal creado", `${actualizado.nombre} fue añadido correctamente.`);
+                let creado;
+                if (fotoFile) {
+                    const form = new FormData();
+                    form.append("animal", new Blob([JSON.stringify(nuevoAnimal)], { type: "application/json" }));
+                    form.append("foto", fotoFile);
+
+                    const res = await fetch("http://localhost:8080/animales", {
+                        method: "POST",
+                        headers: { Authorization: `Bearer ${token}` },
+                        body: form,
+                    });
+                    if (!res.ok) throw new Error("Error creando animal (multipart)");
+                    creado = await res.json();
+                } else {
+                    const res = await fetch("http://localhost:8080/animales", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${token}`,
+                        },
+                        body: JSON.stringify(nuevoAnimal),
+                    });
+                    if (!res.ok) throw new Error("Error creando animal (JSON)");
+                    creado = await res.json();
+                }
+
+                setAnimales((prev) => [...prev, creado]);
+                showSuccess("Animal creado", `${creado.nombre} fue añadido correctamente.`);
             }
 
             setMostrarModal(false);
             setModoEdicion(false);
             setAnimalEditandoId(null);
-
+            setFotoFile(null);
+            setPreviewFoto("");
         } catch (err) {
             console.error(err);
-            showError("Error al guardar", "No se pudo guardar el animal.");
+            showError("Error al guardar", err.message || "No se pudo guardar el animal.");
         }
     };
 
@@ -271,6 +297,7 @@ export default function Animales() {
             estadoNormalizado.includes(termino)
         );
     });
+
     return (
         <div className="animales-container">
             {error && <p className="error">{error}</p>}
@@ -301,12 +328,7 @@ export default function Animales() {
             <div className="filtros" ref={filtroRef}>
                 {["TODOS", "PERRO", "GATO"].map((tipo) => {
                     const icon =
-                        tipo === "PERRO"
-                            ? "/icons/dog.png"
-                            : tipo === "GATO"
-                                ? "/icons/cat.png"
-                                : "/icons/shelt.png";
-
+                        tipo === "PERRO" ? "/icons/dog.png" : tipo === "GATO" ? "/icons/cat.png" : "/icons/shelt.png";
                     const btnRef = useRef(null);
 
                     return (
@@ -315,17 +337,11 @@ export default function Animales() {
                             ref={btnRef}
                             onClick={() => handleClickFiltro(tipo, btnRef)}
                             className={
-                                (!filtroPrincipal && tipo === "TODOS") || filtroPrincipal === tipo
-                                    ? "activo"
-                                    : ""
+                                (!filtroPrincipal && tipo === "TODOS") || filtroPrincipal === tipo ? "activo" : ""
                             }
                             data-tooltip-id="tooltip"
                             data-tooltip-content={
-                                tipo === "PERRO"
-                                    ? "Mostrar perros"
-                                    : tipo === "GATO"
-                                        ? "Mostrar gatos"
-                                        : "Mostrar todos"
+                                tipo === "PERRO" ? "Mostrar perros" : tipo === "GATO" ? "Mostrar gatos" : "Mostrar todos"
                             }
                         >
                             <img src={icon} alt={tipo} className="icono-btn" />
@@ -339,12 +355,7 @@ export default function Animales() {
                     <div
                         className="subfiltros-box"
                         ref={subfiltrosRef}
-                        style={{
-                            position: "absolute",
-                            top: "100%",
-                            left: `${subfiltroPos.left}px`,
-                            transform: "translateX(-50%)",
-                        }}
+                        style={{ position: "absolute", top: "100%", left: `${subfiltroPos.left}px`, transform: "translateX(-50%)" }}
                     >
                         <div className="flecha-subfiltros" />
                         <div className="subfiltros">
@@ -403,7 +414,11 @@ export default function Animales() {
             <div className="card-grid">
                 {animalesFiltrados.map((animal) => (
                     <div className="animal-card" key={animal.id}>
-                        <img src={animal.fotoPerfilUrl} alt={animal.nombre} />
+                        <img
+                            src={animal.fotoPerfilUrl || "/images/placeholder-animal.jpg"}
+                            alt={animal.nombre}
+                            onError={(e) => (e.currentTarget.src = "/images/placeholder-animal.jpg")}
+                        />
                         <div className="animal-info">
                             <h3>{animal.nombre}</h3>
                             <p>{animal.raza}</p>
@@ -470,34 +485,46 @@ export default function Animales() {
                                     <option value="MESES">Meses</option>
                                 </select>
                             </div>
-                            <select
-                                value={nuevoAnimal.tipo}
-                                onChange={(e) => actualizarCampo("tipo", e.target.value)}
-                            >
+                            <select value={nuevoAnimal.tipo} onChange={(e) => actualizarCampo("tipo", e.target.value)}>
                                 <option value="PERRO">Perro</option>
                                 <option value="GATO">Gato</option>
                             </select>
-                            <select
-                                value={nuevoAnimal.sexo}
-                                onChange={(e) => actualizarCampo("sexo", e.target.value)}
-                            >
+                            <select value={nuevoAnimal.sexo} onChange={(e) => actualizarCampo("sexo", e.target.value)}>
                                 <option value="MACHO">Macho</option>
                                 <option value="HEMBRA">Hembra</option>
                             </select>
-                            <select
-                                value={nuevoAnimal.estado}
-                                onChange={(e) => actualizarCampo("estado", e.target.value)}
-                            >
+                            <select value={nuevoAnimal.estado} onChange={(e) => actualizarCampo("estado", e.target.value)}>
                                 <option value="EN_ADOPCION">En adopción</option>
                                 <option value="ADOPTADO">Adoptado</option>
                                 <option value="EN_CASA_DE_ACOGIDA">En casa de acogida</option>
                             </select>
-                            <input
-                                type="text"
-                                placeholder="Foto (URL)"
-                                value={nuevoAnimal.fotoPerfilUrl}
-                                onChange={(e) => actualizarCampo("fotoPerfilUrl", e.target.value)}
-                            />
+
+                            <div className="foto-uploader">
+                                <label className="btn-archivo" title="Subir foto">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => {
+                                            const f = e.target.files?.[0] || null;
+                                            setFotoFile(f);
+                                            setPreviewFoto(f ? URL.createObjectURL(f) : (nuevoAnimal.fotoPerfilUrl || ""));
+                                        }}
+                                        style={{ display: "none" }}
+                                    />
+                                    <i className="fas fa-camera"></i> <LuImagePlus />
+                                </label>
+
+                                {previewFoto && (
+                                    <img
+                                        src={previewFoto}
+                                        alt="preview"
+                                        className="preview-foto"
+                                        onError={(e) => (e.currentTarget.style.display = "none")}
+                                    />
+                                )}
+                            </div>
+
+
                             <textarea
                                 placeholder="Descripción"
                                 value={nuevoAnimal.descripcion}
@@ -525,9 +552,10 @@ export default function Animales() {
                         </div>
                         <div className="modal-scroll">
                             <img
-                                src={animalDetalle.fotoPerfilUrl}
+                                src={animalDetalle.fotoPerfilUrl || "/images/placeholder-animal.jpg"}
                                 alt={animalDetalle.nombre}
                                 className="modal-img"
+                                onError={(e) => (e.currentTarget.src = "/images/placeholder-animal.jpg")}
                             />
                             <div className="info-linea">
                                 {animalDetalle.tipo === "PERRO" ? <FaDog /> : <FaCat />}
@@ -535,7 +563,9 @@ export default function Animales() {
                                 <span className="barra">|</span>
                                 <strong>{animalDetalle.raza}</strong>
                                 <span className="barra">|</span>
-                                <strong>{animalDetalle.edadCantidad} {formatearEnum(animalDetalle.unidadEdad)}</strong>
+                                <strong>
+                                    {animalDetalle.edadCantidad} {formatearEnum(animalDetalle.unidadEdad)}
+                                </strong>
                             </div>
                             <div className="info-linea">
                                 <strong>{formatearEnum(animalDetalle.estado)}</strong>
@@ -549,4 +579,4 @@ export default function Animales() {
             <Tooltip id="tooltip" place="top" />
         </div>
     );
-}   
+}
