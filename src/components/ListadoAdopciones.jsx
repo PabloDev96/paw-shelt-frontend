@@ -20,7 +20,7 @@ export default function ListadoAdopciones() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    fetch("http://localhost:8080/adopciones", {
+    fetch(`${API_URL}/adopciones`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -76,7 +76,7 @@ export default function ListadoAdopciones() {
       setDeletingIds((prev) => new Set(prev).add(id));
 
       const token = localStorage.getItem("token");
-      const res = await fetch(`http://localhost:8080/adopciones/${id}`, {
+      const res = await fetch(`${API_URL}/adopciones/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });

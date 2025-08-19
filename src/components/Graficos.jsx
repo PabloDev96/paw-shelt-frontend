@@ -17,7 +17,6 @@ import {
 } from "recharts";
 import Select from "react-select";
 
-const API_BASE = "http://localhost:8080";
 
 const opcionesPeriodo = [
   { value: "semana", label: "Última semana" },
@@ -40,7 +39,7 @@ export default function Graficos() {
       setLoading(true);
       setError("");
       try {
-        const res = await fetch(`${API_BASE}/graficos?periodo=${periodo}`, {
+        const res = await fetch(`${API_URL}/graficos?periodo=${periodo}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);

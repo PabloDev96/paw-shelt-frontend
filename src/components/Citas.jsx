@@ -60,7 +60,7 @@ export default function Citas() {
   }, []);
 
   const fetchCitas = async () => {
-    const res = await fetch("http://localhost:8080/citas", {
+    const res = await fetch(`${API_URL}/citas`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     const data = await res.json();
@@ -68,7 +68,7 @@ export default function Citas() {
   };
 
   const fetchAdoptantes = async () => {
-    const res = await fetch("http://localhost:8080/adoptantes", {
+    const res = await fetch(`${API_URL}/adoptantes`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     const data = await res.json();
@@ -101,7 +101,7 @@ export default function Citas() {
       personaAdoptanteId: cita.personaAdoptanteId,
     };
 
-    const res = await fetch(`http://localhost:8080/citas/${id}`, {
+    const res = await fetch(`${API_URL}/citas/${id}`, {
       method: "PUT",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -136,7 +136,7 @@ export default function Citas() {
       return showError("Teléfono no válido", "Debe contener exactamente 9 dígitos numéricos.");
     }
 
-    const res = await fetch("http://localhost:8080/adoptantes", {
+    const res = await fetch(`${API_URL}/adoptantes`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -220,7 +220,7 @@ export default function Citas() {
       personaAdoptanteId: adoptanteSeleccionado.id,
     };
 
-    const res = await fetch("http://localhost:8080/citas", {
+    const res = await fetch(`${API_URL}/citas`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -284,7 +284,7 @@ export default function Citas() {
       personaAdoptanteId: adoptanteSeleccionado.id,
     };
 
-    const res = await fetch(`http://localhost:8080/citas/${citaAEditar.id}`, {
+    const res = await fetch(`${API_URL}/citas/${citaAEditar.id}`, {
       method: "PUT",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -309,7 +309,7 @@ export default function Citas() {
 
     if (!confirmado.isConfirmed) return;
 
-    const res = await fetch(`http://localhost:8080/citas/${id}`, {
+    const res = await fetch(`${API_URL}/citas/${id}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${token}`,

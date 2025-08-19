@@ -97,8 +97,8 @@ export default function Animales() {
             }
             const endpoint =
                 tipo && tipo !== "TODOS"
-                    ? `http://localhost:8080/animales/tipo/${tipo}`
-                    : `http://localhost:8080/animales`;
+                    ? `${API_URL}/animales/tipo/${tipo}`
+                    : `${API_URL}/animales`;
 
             const response = await fetch(endpoint, {
                 headers: { Authorization: `Bearer ${token}` },
@@ -178,7 +178,7 @@ export default function Animales() {
         const token = localStorage.getItem("token");
         const form = new FormData();
         form.append("foto", file);
-        const res = await fetch(`http://localhost:8080/animales/${id}/foto`, {
+        const res = await fetch(`${API_URL}/animales/${id}/foto`, {
             method: "PUT",
             headers: { Authorization: `Bearer ${token}` },
             body: form,
@@ -193,7 +193,7 @@ export default function Animales() {
 
         try {
             if (modoEdicion) {
-                const resUpd = await fetch(`http://localhost:8080/animales/${animalEditandoId}`, {
+                const resUpd = await fetch(`${API_URL}/animales/${animalEditandoId}`, {
                     method: "PUT",
                     headers: {
                         "Content-Type": "application/json",
@@ -217,7 +217,7 @@ export default function Animales() {
                     form.append("animal", new Blob([JSON.stringify(nuevoAnimal)], { type: "application/json" }));
                     form.append("foto", fotoFile);
 
-                    const res = await fetch("http://localhost:8080/animales", {
+                    const res = await fetch(`${API_URL}/animales`, {
                         method: "POST",
                         headers: { Authorization: `Bearer ${token}` },
                         body: form,
@@ -225,7 +225,7 @@ export default function Animales() {
                     if (!res.ok) throw new Error("Error creando animal (multipart)");
                     creado = await res.json();
                 } else {
-                    const res = await fetch("http://localhost:8080/animales", {
+                    const res = await fetch(`${API_URL}/animales`, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
@@ -258,7 +258,7 @@ export default function Animales() {
 
         try {
             const token = localStorage.getItem("token");
-            const response = await fetch(`http://localhost:8080/animales/${id}`, {
+            const response = await fetch(`${API_URL}/animales/${id}`, {
                 method: "DELETE",
                 headers: { Authorization: `Bearer ${token}` },
             });

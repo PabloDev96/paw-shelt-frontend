@@ -23,7 +23,7 @@ const FormularioAdopcion = () => {
 
   const fetchAnimales = async () => {
     try {
-      const res = await fetch("http://localhost:8080/animales/disponibles-para-adopcion", {
+      const res = await fetch(`${API_URL}/animales/disponibles-para-adopcion`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -35,7 +35,7 @@ const FormularioAdopcion = () => {
 
   const fetchAdoptantes = async () => {
     try {
-      const res = await fetch("http://localhost:8080/adoptantes", {
+      const res = await fetch(`${API_URL}/adoptantes`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -59,7 +59,7 @@ const FormularioAdopcion = () => {
       observaciones,
     };
 
-    const res = await fetch("http://localhost:8080/adopciones", {
+    const res = await fetch(`${API_URL}/adopciones`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
