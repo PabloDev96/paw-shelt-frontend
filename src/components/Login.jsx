@@ -4,7 +4,7 @@ import { showSuccess, showError } from "../utils/alerts";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import "./styles/Login.css";
-import { API_URL } from "../utils/config";
+import { API_URL } from "../utils/config.js";
 
 const MySwal = withReactContent(Swal);
 
