@@ -10,7 +10,6 @@ import Citas from "./components/Citas";
 import CrearUsuario from "./components/CrearUsuario";
 import Adopciones from "./components/Adopciones";
 import Graficos from "./components/Graficos";
-import { API_URL } from "../utils/config.js";
 
 function App() {
   return (
