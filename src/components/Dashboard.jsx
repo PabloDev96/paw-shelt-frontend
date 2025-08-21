@@ -49,7 +49,7 @@ export default function Dashboard() {
             <>
               <NavLink to="/adopciones" data-tooltip-id="tooltip" data-tooltip-content="Adopciones">
                 <img
-                  src="/icons/adopcion.png"
+                  src="/icons/shelt.png"
                   alt="Adopciones"
                   className="nav-img-icon"
                   loading="lazy"
