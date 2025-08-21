@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { FaHouseChimneyMedical } from "react-icons/fa6";
 import "./styles/Dashboard.css";
 import { LuDog } from "react-icons/lu";
 import { IoCalendarOutline, IoLogOutOutline } from "react-icons/io5";
@@ -48,14 +49,7 @@ export default function Dashboard() {
           {user?.rol === "ADMIN" && (
             <>
               <NavLink to="/adopciones" data-tooltip-id="tooltip" data-tooltip-content="Adopciones">
-                <img
-                  src="/icons/shelt.png"
-                  alt="Adopciones"
-                  className="nav-img-icon"
-                  loading="lazy"
-                  decoding="async"
-                  draggable="false"
-                />
+                <FaHouseChimneyMedical />
               </NavLink>
 
               {/* Botón para ver gráficos/estadísticas */}
