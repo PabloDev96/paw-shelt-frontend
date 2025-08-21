@@ -49,7 +49,14 @@ export default function Dashboard() {
           {user?.rol === "ADMIN" && (
             <>
               <NavLink to="/adopciones" data-tooltip-id="tooltip" data-tooltip-content="Adopciones">
-                <FaHouseChimneyMedical />
+                <img
+                  src="/icons/adopcion.png"
+                  alt="Adopciones"
+                  className="nav-img-icon"
+                  loading="lazy"
+                  decoding="async"
+                  draggable="false"
+                />
               </NavLink>
 
               {/* Botón para ver gráficos/estadísticas */}
