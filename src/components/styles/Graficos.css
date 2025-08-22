@@ -33,7 +33,7 @@
 
 .selector-flotante {
   position: fixed;
-  bottom: max(16px, env(safe-area-inset-bottom));
+  top: max(12px, env(safe-area-inset-top));
   right: max(16px, env(safe-area-inset-right));
   width: 260px;
   z-index: 1000;
@@ -43,6 +43,6 @@
   .selector-flotante {
     width: 200px;
     right: 12px;
-    bottom: 12px;
+    top: 12px;
   }
 }
