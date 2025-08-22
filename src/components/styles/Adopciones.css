@@ -9,9 +9,15 @@
 
 .adopciones-container {
   background-color: var(--light);
-  min-height: 100vh;
   padding: 2rem;
   color: var(--dark);
+    /* Mantén tus colores/padding, pero sin restricciones de altura ni scroll */
+  height: auto !important;
+  min-height: unset !important;
+  max-height: none !important;
+  overflow: visible !important;
+  /* opcional: si otro contenedor padre fuerza overflow */
+  overflow-y: visible !important;
 }
 
 .adopciones-container h2 {
@@ -120,4 +126,18 @@
   display: flex;
   flex-direction: column;
 }
+
+.adopciones-container {
+  background-color: var(--light);
+  padding: 1rem 2rem 1rem 2rem;
+  color: var(--dark);
+  /* Mantén tus colores/padding, pero sin restricciones de altura ni scroll */
+  height: auto !important;
+  min-height: unset !important;
+  max-height: none !important;
+  overflow: visible !important;
+  /* opcional: si otro contenedor padre fuerza overflow */
+  overflow-y: visible !important;
+}
+
     
