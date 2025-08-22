@@ -86,7 +86,7 @@ export default function Graficos() {
     <div style={{ padding: 16 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
         <h2 style={{ margin: 0 }}>Adopciones vs Citas {tituloPeriodo}</h2>
-        <div style={{ width: 260, marginLeft: "auto" }}>
+        <div className="selector-flotante">
           <Select
             classNamePrefix="graficos"
             options={opcionesPeriodo}

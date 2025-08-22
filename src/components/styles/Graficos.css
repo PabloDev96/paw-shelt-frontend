@@ -20,13 +20,29 @@
 
 .quesos-grid {
   display: grid;
-  grid-template-columns: 1fr;  /* en móvil se ponen uno debajo del otro */
+  grid-template-columns: 1fr;
   gap: 16px;
   margin-top: 20px;
 }
 
 @media (min-width: 700px) {
   .quesos-grid {
-    grid-template-columns: 1fr 1fr; /* en pantallas grandes, lado a lado */
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.selector-flotante {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top));
+  right: max(16px, env(safe-area-inset-right));
+  width: 260px;
+  z-index: 1000;
+}
+
+@media (max-width: 600px) {
+  .selector-flotante {
+    width: 200px;
+    right: 12px;
+    top: 12px;
   }
 }
