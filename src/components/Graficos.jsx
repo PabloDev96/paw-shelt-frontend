@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./styles/Graficos.css";
 import {
   LineChart,
@@ -18,7 +18,6 @@ import {
 import Select from "react-select";
 import { API_URL } from "../utils/config.js";
 
-
 const opcionesPeriodo = [
   { value: "semana", label: "Última semana" },
   { value: "mes", label: "Último mes" },
@@ -29,64 +28,186 @@ const COLORS = ["#4dabf7", "#ff6b6b", "#82ca9d", "#ffc658"];
 
 export default function Graficos() {
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-  const [periodo, setPeriodo] = useState("mes");
+
+  // cada gráfico tiene su propio periodo y datos
+  const [comparativa, setComparativa] = useState([]);
+  const [periodoComparativa, setPeriodoComparativa] = useState("mes");
+
+  const [nuevosAnimales, setNuevosAnimales] = useState([]);
+  const [periodoNuevos, setPeriodoNuevos] = useState("mes");
+
+  const [edades, setEdades] = useState([]);
+  const [periodoEdades, setPeriodoEdades] = useState("mes");
+
+  const [sexo, setSexo] = useState([]);
+  const [especies, setEspecies] = useState([]);
+  const [periodoQuesos, setPeriodoQuesos] = useState("mes");
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [data, setData] = useState({ comparativa: [], sexo: [], especies: [], nuevosAnimales: [], edades: [] });
 
-  useEffect(() => {
-    let cancel = false;
-    async function load() {
+  // función reutilizable para cargar datos de servidor o mock
+  async function loadData(periodo, setter, key) {
+    try {
       setLoading(true);
       setError("");
-      try {
-        const res = await fetch(`${API_URL}/graficos?periodo=${periodo}`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json();
-        if (!cancel) {
-          const merged = mergeData(json.adopciones || [], json.citas || []);
-          setData({
-            comparativa: merged,
-            sexo: json.sexo || [],
-            especies: json.especies || [],
-            nuevosAnimales: json.nuevosAnimales || [],
-            edades: json.edades || [],
-          });
-        }
-      } catch (e) {
-        if (!cancel) {
-          setError("No se pudo cargar del servidor. Mostrando datos de ejemplo.");
-          const mock = makeMock(periodo);
-          setData({ comparativa: mergeData(mock.adopciones, mock.citas), sexo: mock.sexo, especies: mock.especies, nuevosAnimales: mock.nuevosAnimales, edades: mock.edades });
-        }
-      } finally {
-        if (!cancel) setLoading(false);
-      }
-    }
-    load();
-    return () => {
-      cancel = true;
-    };
-  }, [periodo, token]);
+      const res = await fetch(`${API_URL}/graficos?periodo=${periodo}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const json = await res.json();
 
-  const tituloPeriodo = useMemo(() => {
-    switch (periodo) {
-      case "semana":
-        return "(última semana)";
-      case "anio":
-        return "(último año)";
-      default:
-        return "(último mes)";
+      switch (key) {
+        case "comparativa":
+          setter(mergeData(json.adopciones || [], json.citas || []));
+          break;
+        case "nuevosAnimales":
+          setter(json.nuevosAnimales || []);
+          break;
+        case "edades":
+          setter(json.edades || []);
+          break;
+        case "quesos":
+          setSexo(json.sexo || []);
+          setEspecies(json.especies || []);
+          break;
+      }
+    } catch (e) {
+      setError("No se pudo cargar del servidor. Mostrando datos de ejemplo.");
+      const mock = makeMock(periodo);
+      if (key === "comparativa") setter(mergeData(mock.adopciones, mock.citas));
+      if (key === "nuevosAnimales") setter(mock.nuevosAnimales);
+      if (key === "edades") setter(mock.edades);
+      if (key === "quesos") {
+        setSexo(mock.sexo);
+        setEspecies(mock.especies);
+      }
+    } finally {
+      setLoading(false);
     }
-  }, [periodo]);
+  }
+
+  // efectos separados
+  useEffect(() => {
+    loadData(periodoComparativa, setComparativa, "comparativa");
+  }, [periodoComparativa]);
+
+  useEffect(() => {
+    loadData(periodoNuevos, setNuevosAnimales, "nuevosAnimales");
+  }, [periodoNuevos]);
+
+  useEffect(() => {
+    loadData(periodoEdades, setEdades, "edades");
+  }, [periodoEdades]);
+
+  useEffect(() => {
+    loadData(periodoQuesos, null, "quesos");
+  }, [periodoQuesos]);
 
   return (
     <div style={{ padding: 16 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-        <h2 style={{ margin: 0 }}>Adopciones vs Citas {tituloPeriodo}</h2>
-        <div className="selector-flotante">
+      {error && (
+        <div style={{ marginBottom: 12, padding: 10, background: "#fff3cd", border: "1px solid #ffeeba", borderRadius: 8, color: "#664d03" }}>
+          {error}
+        </div>
+      )}
+
+      {/* Comparativa */}
+      <Section title="Adopciones vs Citas" periodo={periodoComparativa} setPeriodo={setPeriodoComparativa}>
+        <ResponsiveContainer width="100%" height={400}>
+          <LineChart data={comparativa}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="fecha" />
+            <YAxis allowDecimals={false} />
+            <ReTooltip />
+            <Legend />
+            <Line type="monotone" dataKey="adopciones" name="Adopciones" stroke="#4dabf7" dot={false} />
+            <Line type="monotone" dataKey="citas" name="Citas" stroke="#ff6b6b" dot={false} />
+          </LineChart>
+        </ResponsiveContainer>
+      </Section>
+
+      {/* Nuevos animales */}
+      <Section title="Nuevos animales (gatos/perros)" periodo={periodoNuevos} setPeriodo={setPeriodoNuevos}>
+        <ResponsiveContainer width="100%" height={320}>
+          <BarChart data={nuevosAnimales}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="fecha" />
+            <YAxis allowDecimals={false} />
+            <ReTooltip />
+            <Legend />
+            <Bar dataKey="gatos" name="Gatos" stackId="a" fill="#ff6b6b" />
+            <Bar dataKey="perros" name="Perros" stackId="a" fill="#82ca9d" />
+          </BarChart>
+        </ResponsiveContainer>
+      </Section>
+
+      {/* Edades */}
+      <Section title="Distribución de edades (años)" periodo={periodoEdades} setPeriodo={setPeriodoEdades}>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={edades}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="categoria" />
+            <YAxis allowDecimals={false} />
+            <ReTooltip />
+            <Legend />
+            <Bar dataKey="cantidad" name="Animales" fill="#a4de6c" />
+          </BarChart>
+        </ResponsiveContainer>
+      </Section>
+
+      {/* Quesos */}
+      <Section title="Distribución de sexo y especies" periodo={periodoQuesos} setPeriodo={setPeriodoQuesos}>
+        <div className="quesos-grid">
+          <div>
+            <h4 style={{ textAlign: "center", marginBottom: 8 }}>Sexo de los animales</h4>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie data={sexo} dataKey="cantidad" nameKey="categoria" cx="50%" cy="50%" outerRadius={90} label>
+                  {sexo.map((entry, idx) => (
+                    <Cell key={`cell-sexo-${idx}`} fill={COLORS[idx % COLORS.length]} />
+                  ))}
+                </Pie>
+                <ReTooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div>
+            <h4 style={{ textAlign: "center", marginBottom: 8 }}>Gatos vs Perros</h4>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie data={especies} dataKey="cantidad" nameKey="categoria" cx="50%" cy="50%" outerRadius={90} label>
+                  {especies.map((entry, idx) => (
+                    <Cell key={`cell-esp-${idx}`} fill={COLORS[(idx + 2) % COLORS.length]} />
+                  ))}
+                </Pie>
+                <ReTooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </Section>
+
+      {loading && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(255,255,255,0.6)", display: "grid", placeItems: "center" }}>
+          <div style={{ padding: 12, borderRadius: 10, background: "white", boxShadow: "0 4px 14px rgba(0,0,0,.12)" }}>Cargando…</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Componente auxiliar para título + selector
+function Section({ title, periodo, setPeriodo, children }) {
+  const label = periodo === "semana" ? "(última semana)" : periodo === "anio" ? "(último año)" : "(último mes)";
+  return (
+    <div style={{ marginBottom: 32 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+        <h3 style={{ margin: 0 }}>{title} {label}</h3>
+        <div style={{ width: 200 }}>
           <Select
             classNamePrefix="graficos"
             options={opcionesPeriodo}
@@ -95,87 +216,7 @@ export default function Graficos() {
           />
         </div>
       </div>
-
-      {error && (
-        <div style={{ marginBottom: 12, padding: 10, background: "#fff3cd", border: "1px solid #ffeeba", borderRadius: 8, color: "#664d03" }}>
-          {error}
-        </div>
-      )}
-
-      <ResponsiveContainer width="100%" height={400}>
-        <LineChart data={data.comparativa} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="fecha" />
-          <YAxis allowDecimals={false} />
-          <ReTooltip />
-          <Legend />
-          <Line type="monotone" dataKey="adopciones" name="Adopciones" stroke="#4dabf7" dot={false} />
-          <Line type="monotone" dataKey="citas" name="Citas" stroke="#ff6b6b" dot={false} />
-        </LineChart>
-      </ResponsiveContainer>
-
-      <h3 style={{ marginTop: 16, marginBottom: 8 }}>Nuevos animales (gatos/perros)</h3>
-      <ResponsiveContainer width="100%" height={320}>
-        <BarChart data={data.nuevosAnimales} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="fecha" />
-          <YAxis allowDecimals={false} />
-          <ReTooltip />
-          <Legend />
-          <Bar dataKey="gatos" name="Gatos" stackId="a" fill="#ff6b6b" />
-          <Bar dataKey="perros" name="Perros" stackId="a" fill="#82ca9d" />
-        </BarChart>
-      </ResponsiveContainer>
-
-      <h3 style={{ marginTop: 16, marginBottom: 8 }}>Distribución de edades (años)</h3>
-      <ResponsiveContainer width="100%" height={300}>
-        <BarChart data={data.edades} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="categoria" />
-          <YAxis allowDecimals={false} />
-          <ReTooltip />
-          <Legend />
-          <Bar dataKey="cantidad" name="Animales" fill="#a4de6c" />
-        </BarChart>
-      </ResponsiveContainer>
-
-      <div className="quesos-grid">
-        <div>
-          <h3 style={{ textAlign: "center", marginBottom: 8 }}>Sexo de los animales</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie data={data.sexo} dataKey="cantidad" nameKey="categoria" cx="50%" cy="50%" outerRadius={90} label>
-                {data.sexo.map((entry, idx) => (
-                  <Cell key={`cell-sexo-${idx}`} fill={COLORS[idx % COLORS.length]} />
-                ))}
-              </Pie>
-              <ReTooltip />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div>
-          <h3 style={{ textAlign: "center", marginBottom: 8 }}>Gatos vs Perros</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie data={data.especies} dataKey="cantidad" nameKey="categoria" cx="50%" cy="50%" outerRadius={90} label>
-                {data.especies.map((entry, idx) => (
-                  <Cell key={`cell-esp-${idx}`} fill={COLORS[(idx + 2) % COLORS.length]} />
-                ))}
-              </Pie>
-              <ReTooltip />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {loading && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(255,255,255,0.6)", display: "grid", placeItems: "center" }}>
-          <div style={{ padding: 12, borderRadius: 10, background: "white", boxShadow: "0 4px 14px rgba(0,0,0,.12)" }}>Cargando…</div>
-        </div>
-      )}
+      {children}
     </div>
   );
 }
