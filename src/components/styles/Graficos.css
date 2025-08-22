@@ -1,7 +1,7 @@
 .chart-card {
   border-radius: 16px;
   padding: 20px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   background: white;
 }
 
@@ -32,17 +32,19 @@
 }
 
 .selector-flotante {
-  position: fixed;
-  top: max(12px, env(safe-area-inset-top));
-  right: max(16px, env(safe-area-inset-right));
+  position: sticky;
+  top: calc(var(--app-header-h, 64px) + max(8px, env(safe-area-inset-top)));
+  z-index: 500;
   width: 260px;
-  z-index: 1000;
+  margin-left: auto;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .12);
+  padding: 4px;
 }
 
 @media (max-width: 600px) {
-  .selector-flotante {
+  .selector-sticky {
     width: 200px;
-    right: 12px;
-    top: 12px;
   }
 }

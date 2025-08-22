@@ -20,6 +20,27 @@ export default function Dashboard() {
     }
   }, []);
 
+  useEffect(() => {
+    const el = document.getElementById("app-header");
+    if (!el) return;
+
+    const setHeaderH = () => {
+      const h = el.getBoundingClientRect().height;
+      document.documentElement.style.setProperty("--app-header-h", `${h}px`);
+    };
+
+    setHeaderH();
+
+    const ro = new ResizeObserver(setHeaderH);
+    ro.observe(el);
+
+    window.addEventListener("resize", setHeaderH);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", setHeaderH);
+    };
+  }, []);
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -28,7 +49,7 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard-layout">
-      <header className="dashboard-header">
+      <header className="dashboard-header" id="app-header">
         <div className="header-left">
           <div className="logo">
             <img src="/logo/pawshelt.png" alt="Pawshelt" />
