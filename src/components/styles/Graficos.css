@@ -31,20 +31,17 @@
   }
 }
 
-.selector-flotante {
-  position: sticky;
-  top: calc(var(--app-header-h, 64px) + max(8px, env(safe-area-inset-top)));
-  z-index: 500;
-  width: 260px;
-  margin-left: auto;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, .12);
-  padding: 4px;
+.grafico-card {
+  background: var(--medium-light);                  /* fondo blanco */
+  border-radius: 12px;               /* esquinas redondeadas */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* sombra ligera */
+  padding: 16px;
+  margin-bottom: 24px;               /* espacio entre tarjetas */
+  border: 1px solid #e5e7eb;         /* un gris suave para bordes */
 }
 
-@media (max-width: 600px) {
-  .selector-sticky {
-    width: 200px;
-  }
+.grafico-card h3, 
+.grafico-card h4 {
+  margin-top: 0;
+  color: var(--dark);
 }

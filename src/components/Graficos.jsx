@@ -29,7 +29,6 @@ const COLORS = ["#4dabf7", "#ff6b6b", "#82ca9d", "#ffc658"];
 export default function Graficos() {
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
-  // cada gráfico tiene su propio periodo y datos
   const [comparativa, setComparativa] = useState([]);
   const [periodoComparativa, setPeriodoComparativa] = useState("mes");
 
@@ -37,16 +36,12 @@ export default function Graficos() {
   const [periodoNuevos, setPeriodoNuevos] = useState("mes");
 
   const [edades, setEdades] = useState([]);
-  const [periodoEdades, setPeriodoEdades] = useState("mes");
-
   const [sexo, setSexo] = useState([]);
   const [especies, setEspecies] = useState([]);
-  const [periodoQuesos, setPeriodoQuesos] = useState("mes");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // función reutilizable para cargar datos de servidor o mock
   async function loadData(periodo, setter, key) {
     try {
       setLoading(true);
@@ -65,7 +60,7 @@ export default function Graficos() {
           setter(json.nuevosAnimales || []);
           break;
         case "edades":
-          setter(json.edades || []);
+          setEdades(json.edades || []);
           break;
         case "quesos":
           setSexo(json.sexo || []);
@@ -77,7 +72,7 @@ export default function Graficos() {
       const mock = makeMock(periodo);
       if (key === "comparativa") setter(mergeData(mock.adopciones, mock.citas));
       if (key === "nuevosAnimales") setter(mock.nuevosAnimales);
-      if (key === "edades") setter(mock.edades);
+      if (key === "edades") setEdades(mock.edades);
       if (key === "quesos") {
         setSexo(mock.sexo);
         setEspecies(mock.especies);
@@ -87,7 +82,6 @@ export default function Graficos() {
     }
   }
 
-  // efectos separados
   useEffect(() => {
     loadData(periodoComparativa, setComparativa, "comparativa");
   }, [periodoComparativa]);
@@ -97,12 +91,9 @@ export default function Graficos() {
   }, [periodoNuevos]);
 
   useEffect(() => {
-    loadData(periodoEdades, setEdades, "edades");
-  }, [periodoEdades]);
-
-  useEffect(() => {
-    loadData(periodoQuesos, null, "quesos");
-  }, [periodoQuesos]);
+    loadData("mes", null, "edades"); // global sin selector
+    loadData("mes", null, "quesos"); // global sin selector
+  }, []);
 
   return (
     <div style={{ padding: 16 }}>
@@ -112,8 +103,8 @@ export default function Graficos() {
         </div>
       )}
 
-      {/* Comparativa */}
-      <Section title="Adopciones vs Citas" periodo={periodoComparativa} setPeriodo={setPeriodoComparativa}>
+      {/* Comparativa (con selector) */}
+      <SectionConSelector title="Adopciones vs Citas" periodo={periodoComparativa} setPeriodo={setPeriodoComparativa}>
         <ResponsiveContainer width="100%" height={400}>
           <LineChart data={comparativa}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -121,14 +112,14 @@ export default function Graficos() {
             <YAxis allowDecimals={false} />
             <ReTooltip />
             <Legend />
-            <Line type="monotone" dataKey="adopciones" name="Adopciones" stroke="#4dabf7" dot={false} />
-            <Line type="monotone" dataKey="citas" name="Citas" stroke="#ff6b6b" dot={false} />
+            <Line type="monotone" dataKey="adopciones" name="Adopciones" stroke="#1976d2" strokeWidth={3} dot={false} />
+            <Line type="monotone" dataKey="citas" name="Citas" stroke="#d32f2f" strokeWidth={3} dot={false} />
           </LineChart>
         </ResponsiveContainer>
-      </Section>
+      </SectionConSelector>
 
-      {/* Nuevos animales */}
-      <Section title="Nuevos animales (gatos/perros)" periodo={periodoNuevos} setPeriodo={setPeriodoNuevos}>
+      {/* Nuevos animales (con selector) */}
+      <SectionConSelector title="Nuevos animales (gatos/perros)" periodo={periodoNuevos} setPeriodo={setPeriodoNuevos}>
         <ResponsiveContainer width="100%" height={320}>
           <BarChart data={nuevosAnimales}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -136,14 +127,14 @@ export default function Graficos() {
             <YAxis allowDecimals={false} />
             <ReTooltip />
             <Legend />
-            <Bar dataKey="gatos" name="Gatos" stackId="a" fill="#ff6b6b" />
-            <Bar dataKey="perros" name="Perros" stackId="a" fill="#82ca9d" />
+            <Bar dataKey="gatos" name="Gatos" stackId="a" fill="#c2185b" />
+            <Bar dataKey="perros" name="Perros" stackId="a" fill="#00796b" />
           </BarChart>
         </ResponsiveContainer>
-      </Section>
+      </SectionConSelector>
 
-      {/* Edades */}
-      <Section title="Distribución de edades (años)" periodo={periodoEdades} setPeriodo={setPeriodoEdades}>
+      {/* Edades (sin selector) */}
+      <SectionSoloTitulo title="Distribución de edades (años)">
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={edades}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -151,13 +142,13 @@ export default function Graficos() {
             <YAxis allowDecimals={false} />
             <ReTooltip />
             <Legend />
-            <Bar dataKey="cantidad" name="Animales" fill="#a4de6c" />
+            <Bar dataKey="cantidad" name="Animales" fill="#009688" />
           </BarChart>
         </ResponsiveContainer>
-      </Section>
+      </SectionSoloTitulo>
 
-      {/* Quesos */}
-      <Section title="Distribución de sexo y especies" periodo={periodoQuesos} setPeriodo={setPeriodoQuesos}>
+      {/* Quesos (sin selector) */}
+      <SectionSoloTitulo title="Distribución de sexo y especies">
         <div className="quesos-grid">
           <div>
             <h4 style={{ textAlign: "center", marginBottom: 8 }}>Sexo de los animales</h4>
@@ -165,7 +156,10 @@ export default function Graficos() {
               <PieChart>
                 <Pie data={sexo} dataKey="cantidad" nameKey="categoria" cx="50%" cy="50%" outerRadius={90} label>
                   {sexo.map((entry, idx) => (
-                    <Cell key={`cell-sexo-${idx}`} fill={COLORS[idx % COLORS.length]} />
+                    <Cell
+                      key={`cell-sexo-${idx}`}
+                      fill={idx === 0 ? "#e91e63" : "#2196f3"}
+                    />
                   ))}
                 </Pie>
                 <ReTooltip />
@@ -180,7 +174,10 @@ export default function Graficos() {
               <PieChart>
                 <Pie data={especies} dataKey="cantidad" nameKey="categoria" cx="50%" cy="50%" outerRadius={90} label>
                   {especies.map((entry, idx) => (
-                    <Cell key={`cell-esp-${idx}`} fill={COLORS[(idx + 2) % COLORS.length]} />
+                    <Cell
+                      key={`cell-esp-${idx}`}
+                      fill={idx === 0 ? "#c2185b" : "#00796b"}
+                    />
                   ))}
                 </Pie>
                 <ReTooltip />
@@ -189,7 +186,7 @@ export default function Graficos() {
             </ResponsiveContainer>
           </div>
         </div>
-      </Section>
+      </SectionSoloTitulo>
 
       {loading && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(255,255,255,0.6)", display: "grid", placeItems: "center" }}>
@@ -200,12 +197,16 @@ export default function Graficos() {
   );
 }
 
-// Componente auxiliar para título + selector
-function Section({ title, periodo, setPeriodo, children }) {
-  const label = periodo === "semana" ? "(última semana)" : periodo === "anio" ? "(último año)" : "(último mes)";
+/* Auxiliares */
+function SectionConSelector({ title, periodo, setPeriodo, children }) {
+  const label =
+    periodo === "semana" ? "(última semana)" :
+      periodo === "anio" ? "(último año)" :
+        "(último mes)";
+
   return (
-    <div style={{ marginBottom: 32 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+    <div className="grafico-card">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
         <h3 style={{ margin: 0 }}>{title} {label}</h3>
         <div style={{ width: 200 }}>
           <Select
@@ -221,6 +222,17 @@ function Section({ title, periodo, setPeriodo, children }) {
   );
 }
 
+function SectionSoloTitulo({ title, children }) {
+  return (
+    <div className="grafico-card">
+      <h3 style={{ marginBottom: 12 }}>{title}</h3>
+      {children}
+    </div>
+  );
+}
+
+
+/* Utils */
 function mergeData(adopciones, citas) {
   const map = {};
   adopciones.forEach(a => {
