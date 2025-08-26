@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { showSuccess, showError } from "../utils/alerts";
+import { showError } from "../utils/alerts";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import "./styles/Login.css";
@@ -8,12 +8,25 @@ import { API_URL } from "../utils/config.js";
 
 const MySwal = withReactContent(Swal);
 const PING_PATH = "/ping";
+const MIN_LOADER_MS = 3000; // mínimo de 3 segundos
+
+// Helper para garantizar tiempo mínimo
+const waitMinTime = (start, action) => {
+  const elapsed = Date.now() - start;
+  if (elapsed < MIN_LOADER_MS) {
+    setTimeout(action, MIN_LOADER_MS - elapsed);
+  } else {
+    action();
+  }
+};
 
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [serverReady, setServerReady] = useState(false);
+  const [isWaking, setIsWaking] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const firstRun = useRef(true);
 
@@ -22,29 +35,14 @@ export default function Login() {
     firstRun.current = false;
 
     const wakeServer = async () => {
-      // Parámetros de reintento
-      const MAX_WAIT_MS = 300_000; // hasta 5 min por si el cold start es largo
+      const MAX_WAIT_MS = 300_000;
       const START_DELAY = 800;
       const MAX_DELAY = 5_000;
       const REQ_TIMEOUT = 8_000;
 
       const pingUrl = `${API_URL}${PING_PATH}`;
-
-      // 1) ALERTA de "Despertando…" (bloqueante con loader)
-      MySwal.fire({
-        title: "Despertando el servidor…",
-        html: `<small>Si estaba en frío, puede tardar unos segundos.</small>`,
-        didOpen: () => {
-          MySwal.showLoading();
-        },
-        allowOutsideClick: false,
-        allowEscapeKey: false,
-        background: "var(--light)",
-        color: "var(--dark)",
-        showConfirmButton: false,
-      });
-
       const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
       const fetchWithTimeout = async (url, options = {}) => {
         const ctrl = new AbortController();
         const id = setTimeout(() => ctrl.abort(), REQ_TIMEOUT);
@@ -59,19 +57,19 @@ export default function Login() {
       };
 
       let delay = START_DELAY;
-      const start = Date.now();
+      const startWake = Date.now();
+      setIsWaking(true);
 
-      while (Date.now() - start < MAX_WAIT_MS) {
+      while (Date.now() - startWake < MAX_WAIT_MS) {
         try {
           const res = await fetchWithTimeout(pingUrl, { method: "GET" });
           if (res.ok) {
-            // Si responde JSON, valida status; si no, con 200 basta
-            const data = await res.json().catch(() => null);
-            if (!data || data?.status?.toUpperCase?.() === "UP") {
-              setServerReady(true);
-              MySwal.close(); // cierra "Despertando…"
+            setServerReady(true);
 
-              // 2) ALERTA de BIENVENIDA (como la tenías antes)
+            // quitamos el gif y mostramos bienvenida
+            waitMinTime(startWake, () => {
+              setIsWaking(false);
+
               MySwal.fire({
                 title: "¡Bienvenido a Pawshelt!",
                 text: "Inicia sesión para empezar a gestionar tu refugio.",
@@ -84,25 +82,26 @@ export default function Login() {
                 color: "var(--dark)",
                 customClass: { popup: "swal-popup", title: "swal-title" },
               });
+            });
 
-              return;
-            }
+            return;
           }
         } catch {
-          // Ignorar y reintentar
+          // reintenta
         }
         await sleep(delay);
         delay = Math.min(MAX_DELAY, Math.floor(delay * 1.6));
       }
 
-      // Si no se pudo confirmar
       setServerReady(false);
-      MySwal.update({
+      waitMinTime(startWake, () => setIsWaking(false));
+      MySwal.fire({
         title: "No se pudo confirmar el arranque",
-        html: "<small>Se agotó el tiempo de espera. Revisa logs o vuelve a intentar.</small>",
+        text: "Se agotó el tiempo de espera. Revisa los logs o vuelve a intentar.",
         icon: "error",
-        showConfirmButton: true,
         confirmButtonText: "Entendido",
+        background: "var(--light)",
+        color: "var(--dark)",
       });
     };
 
@@ -127,6 +126,8 @@ export default function Login() {
     }
 
     setError("");
+    const startSubmit = Date.now();
+    setIsSubmitting(true);
 
     try {
       const response = await fetch(`${API_URL}/auth/login`, {
@@ -139,6 +140,7 @@ export default function Login() {
         const errorText = await response.text();
         setError(`Error: ${errorText}`);
         showError("Error de autenticación", errorText || "Credenciales incorrectas.");
+        waitMinTime(startSubmit, () => setIsSubmitting(false));
         return;
       }
 
@@ -146,19 +148,32 @@ export default function Login() {
 
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify({ nombre: data.nombre, rol: data.rol }));
-
-      await showSuccess("¡Login exitoso!", "Redirigiendo al panel...", 2000);
       localStorage.setItem("showLoginSuccess", "true");
-      navigate("/panel");
+
+      // Redirige al panel respetando los 3s mínimos
+      waitMinTime(startSubmit, () => navigate("/panel"));
     } catch (error) {
       console.error("Error al hacer login:", error);
       setError("Error de conexión con el servidor.");
       showError("Error de conexión", "No se pudo contactar al servidor.");
+      waitMinTime(startSubmit, () => setIsSubmitting(false));
     }
   };
 
+  const disabled = !serverReady || isSubmitting;
+
   return (
     <div className="login-container">
+      {/* Overlay con el GIF mientras despierta el server o durante el submit */}
+      {(isWaking || isSubmitting) && (
+        <div className="loader-overlay">
+          <img src="/dogloader.gif" alt="Cargando..." className="loader-gif" />
+          <p className="loader-text">
+            {isWaking ? "Despertando servidor…" : "Iniciando sesión…"}
+          </p>
+        </div>
+      )}
+
       <form className="login-box" onSubmit={handleSubmit}>
         <h2>Iniciar Sesión</h2>
         {error && <p className="error-message">{error}</p>}
@@ -169,7 +184,7 @@ export default function Login() {
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           placeholder="Ingresa tu usuario"
-          disabled={!serverReady}
+          disabled={disabled}
         />
 
         <label>Contraseña</label>
@@ -178,11 +193,11 @@ export default function Login() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Ingresa tu contraseña"
-          disabled={!serverReady}
+          disabled={disabled}
         />
 
-        <button type="submit" disabled={!serverReady}>
-          {serverReady ? "Entrar" : "Despertando…"}
+        <button type="submit" disabled={disabled}>
+          {serverReady && !isSubmitting ? "Entrar" : "Espere…"}
         </button>
       </form>
     </div>
