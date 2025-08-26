@@ -151,7 +151,7 @@ export default function Login() {
       localStorage.setItem("showLoginSuccess", "true");
 
       // Redirige al panel respetando los 3s mínimos
-      waitMinTime(startSubmit, () => navigate("/panel"));
+      waitMinTime(startSubmit, () => navigate("/animales"));
     } catch (error) {
       console.error("Error al hacer login:", error);
       setError("Error de conexión con el servidor.");

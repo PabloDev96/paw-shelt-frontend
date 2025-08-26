@@ -7,6 +7,7 @@ import { IoCalendarOutline, IoLogOutOutline } from "react-icons/io5";
 import { MdEuro, MdPersonAdd, MdOutlineQueryStats } from "react-icons/md";
 import { Tooltip } from "react-tooltip";
 import { showWelcomeDashboard } from "../utils/alerts";
+import { GiDogHouse } from "react-icons/gi";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -53,39 +54,53 @@ export default function Dashboard() {
         <div className="header-left">
           <div className="logo">
             <img src="/logo/pawshelt.png" alt="Pawshelt" />
-            <div className="usuario-info">
-              <span>{user?.nombre}</span>
-              <span className="rol">{user?.rol}</span>
-            </div>
+            <span className="logo-text">PawShelt</span>
           </div>
         </div>
 
         <nav className="header-center dashboard-nav">
-          <NavLink to="/animales" data-tooltip-id="tooltip" data-tooltip-content="Animales">
+          <NavLink
+            to="/animales"
+            className={({ isActive }) => (isActive ? "active" : "")}
+            data-tooltip-id="tooltip"
+            data-tooltip-content="Animales"
+          >
             <LuDog />
           </NavLink>
-          <NavLink to="/citas" data-tooltip-id="tooltip" data-tooltip-content="Citas">
+          <NavLink
+            to="/citas"
+            className={({ isActive }) => (isActive ? "active" : "")}
+            data-tooltip-id="tooltip"
+            data-tooltip-content="Citas"
+          >
             <IoCalendarOutline />
           </NavLink>
           {user?.rol === "ADMIN" && (
             <>
-              <NavLink to="/adopciones" data-tooltip-id="tooltip" data-tooltip-content="Adopciones">
-                <img
-                  src="/icons/adopcion.png"
-                  alt="Adopciones"
-                  className="nav-img-icon"
-                  loading="lazy"
-                  decoding="async"
-                  draggable="false"
-                />
+              <NavLink
+                to="/adopciones"
+                className={({ isActive }) => (isActive ? "active" : "")}
+                data-tooltip-id="tooltip"
+                data-tooltip-content="Adopciones"
+              >
+                <GiDogHouse />
               </NavLink>
 
-              {/* Botón para ver gráficos/estadísticas */}
-              <NavLink to="/graficos" data-tooltip-id="tooltip" data-tooltip-content="Estadísticas">
+              <NavLink
+                to="/graficos"
+                className={({ isActive }) => (isActive ? "active" : "")}
+                data-tooltip-id="tooltip"
+                data-tooltip-content="Estadísticas"
+              >
                 <MdOutlineQueryStats />
               </NavLink>
 
-              <NavLink to="/crear-usuario" data-tooltip-id="tooltip" data-tooltip-content="Crear usuario">
+              <NavLink
+                to="/crear-usuario"
+                className={({ isActive }) => (isActive ? "active" : "")}
+                data-tooltip-id="tooltip"
+                data-tooltip-content="Crear usuario"
+              >
                 <MdPersonAdd />
               </NavLink>
             </>
@@ -93,6 +108,10 @@ export default function Dashboard() {
         </nav>
 
         <div className="header-right">
+          <div className="usuario-info">
+            <span>{user?.nombre}</span>
+            <span className="rol">{user?.rol}</span>
+          </div>
           <button
             className="logout-icon-btn"
             data-tooltip-id="menu-tip"

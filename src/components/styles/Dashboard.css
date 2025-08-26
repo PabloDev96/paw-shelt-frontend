@@ -45,7 +45,11 @@
 }
 
 .dashboard-nav a.active {
-  text-decoration: underline;
+  background-color: var(--medium-light);
+  color: var(--medium-dark);
+  border-radius: 20%;
+  padding: 0rem;
+  transform: scale(1.1);
 }
 
 .logout-icon-btn {
@@ -167,4 +171,94 @@
   object-fit: contain;
   pointer-events: none;
   filter: invert(72%) sepia(16%) saturate(521%) hue-rotate(79deg) brightness(94%) contrast(85%);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.logo-text {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: var(--medium-light);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.usuario-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  color: white;
+  font-size: 0.9rem;
+}
+
+.usuario-info .rol {
+  color: var(--medium-light);
+  font-size: 0.75rem;
+}
+
+/* ===== <= 600px ===== */
+@media (max-width: 600px) {
+  .logo {
+    gap: 0.6rem;
+  }
+
+  .logo-text {
+    font-size: 1.1rem;
+  }
+
+  .usuario-info {
+    font-size: 0.8rem;
+    gap: 0.15rem;
+  }
+
+  .usuario-info .rol {
+    font-size: 0.7rem;
+  }
+
+  .header-right {
+    gap: 0.6rem;
+  }
+
+  /* El círculo activo reduce padding para no “desbordar” */
+  .dashboard-nav a.active {
+    padding: 0.3rem;
+    transform: scale(1.06);
+  }
+}
+
+/* ===== <= 400px ===== */
+@media (max-width: 400px) {
+  .logo {
+    gap: 0rem;
+  }
+
+  .logo-text {
+    font-size: 1rem;
+  }
+
+  .usuario-info {
+    font-size: 0.7rem;
+  }
+
+  .usuario-info .rol {
+    font-size: 0.62rem;
+  }
+
+  .header-right {
+    gap: 1.6rem;
+  }
+
+  /* Aún un poco más compacto en móviles muy pequeños */
+  .dashboard-nav a.active {
+    padding: 0.2rem;
+    transform: scale(1.04);
+  }
 }

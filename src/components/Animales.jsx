@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useLayoutEffect } from "react";
 import "./styles/Animales.css";
-import { showSuccess, showError, showConfirm } from "../utils/alerts";
+import { showConfirm } from "../utils/alerts";
 import { useNavigate } from "react-router-dom";
 import { FaPencilAlt, FaTrashAlt, FaDog, FaCat, FaPlus } from "react-icons/fa";
 import { LuImagePlus } from "react-icons/lu";
@@ -9,6 +9,7 @@ import { IoClose } from "react-icons/io5";
 import { MdMale, MdFemale } from "react-icons/md";
 import { Tooltip } from "react-tooltip";
 import { API_URL } from "../utils/config.js";
+import { useOneFlightLoader } from "../hooks/useOneFlightLoader";
 
 // ===== util formato =====
 const formatearEnum = (valor) => {
@@ -22,14 +23,6 @@ const formatearEnum = (valor) => {
     EN_CASA_DE_ACOGIDA: "En casa de acogida",
   };
   return reemplazos[valor] || valor;
-};
-
-// ===== loader min 2s + candado una-sola-peticion =====
-const MIN_LOADER_MS = 2000;
-const waitMinTime = (start, fn) => {
-  const elapsed = Date.now() - start;
-  if (elapsed < MIN_LOADER_MS) setTimeout(fn, MIN_LOADER_MS - elapsed);
-  else fn();
 };
 
 export default function Animales() {
@@ -68,58 +61,8 @@ export default function Animales() {
 
   const navigate = useNavigate();
 
-  // ===== loader global de acciones (crear/editar/eliminar) =====
-  const [loadingAction, setLoadingAction] = useState(false);
-  const inFlightRef = useRef(false); // candado anti doble clic
-
-  // Alerta pendiente después del loader (arregla stale closure)
-  const [pendingAlert, setPendingAlert] = useState(null);
-  const alertRef = useRef(null);
-  const setAlert = (payload) => {
-    alertRef.current = payload;
-    setPendingAlert(payload);
-  };
-
-  const runWithLoader = async (fn) => {
-    if (inFlightRef.current) return;
-    inFlightRef.current = true;
-
-    // limpia alertas previas
-    alertRef.current = null;
-    setPendingAlert(null);
-
-    const start = Date.now();
-    setLoadingAction(true);
-
-    try {
-      const result = await fn();
-      waitMinTime(start, () => {
-        setLoadingAction(false);
-        const alert = alertRef.current;
-        if (alert) {
-          if (alert.type === "success") showSuccess(alert.title, alert.text);
-          if (alert.type === "error") showError(alert.title, alert.text);
-          alertRef.current = null;
-          setPendingAlert(null);
-        }
-      });
-      return result;
-    } catch (e) {
-      waitMinTime(start, () => {
-        setLoadingAction(false);
-        const alert = alertRef.current;
-        if (alert) {
-          if (alert.type === "success") showSuccess(alert.title, alert.text);
-          if (alert.type === "error") showError(alert.title, alert.text);
-          alertRef.current = null;
-          setPendingAlert(null);
-        }
-      });
-      throw e;
-    } finally {
-      inFlightRef.current = false;
-    }
-  };
+  // Loader + anti reentradas + alertas tras loader (mínimo 2s)
+  const { loading, runWithLoader, success, error: alertError } = useOneFlightLoader({ minMs: 2000 });
 
   useEffect(() => {
     fetchAnimales();
@@ -249,7 +192,6 @@ export default function Animales() {
   const handleGuardarAnimal = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem("token");
-    if (inFlightRef.current) return; // anti doble submit
 
     await runWithLoader(async () => {
       try {
@@ -272,11 +214,7 @@ export default function Animales() {
           }
 
           setAnimales((prev) => prev.map((a) => (a.id === animalEditandoId ? actualizado : a)));
-          setAlert({
-            type: "success",
-            title: "Animal actualizado",
-            text: `${actualizado.nombre} fue editado correctamente.`,
-          });
+          success("Animal actualizado", `${actualizado.nombre} fue editado correctamente.`);
         } else {
           // ----- CREAR -----
           let creado;
@@ -310,11 +248,7 @@ export default function Animales() {
           }
 
           setAnimales((prev) => [...prev, creado]);
-          setAlert({
-            type: "success",
-            title: "Animal creado",
-            text: `${creado.nombre} fue añadido correctamente.`,
-          });
+          success("Animal creado", `${creado.nombre} fue añadido correctamente.`);
         }
 
         // cerrar modal y limpiar
@@ -325,17 +259,12 @@ export default function Animales() {
         setPreviewFoto("");
       } catch (err) {
         console.error(err);
-        setAlert({
-          type: "error",
-          title: "Error al guardar",
-          text: err.message || "No se pudo guardar el animal.",
-        });
+        alertError("Error al guardar", err.message || "No se pudo guardar el animal.");
       }
     });
   };
 
   const eliminarAnimal = async (id) => {
-    if (inFlightRef.current) return; // evita doble clic
     const confirmacion = await showConfirm("Eliminar", "Esta acción no se puede deshacer.");
     if (!confirmacion.isConfirmed) return;
 
@@ -349,12 +278,12 @@ export default function Animales() {
 
         if (response.ok) {
           setAnimales((prev) => prev.filter((a) => a.id !== id));
-          setAlert({ type: "success", title: "Eliminado", text: "Animal eliminado correctamente." });
+          success("Eliminado", "Animal eliminado correctamente.");
         } else {
-          setAlert({ type: "error", title: "Error", text: "No se pudo eliminar." });
+          alertError("Error", "No se pudo eliminar.");
         }
       } catch (err) {
-        setAlert({ type: "error", title: "Error", text: "Error de conexión" });
+        alertError("Error", "Error de conexión");
       }
     });
   };
@@ -386,7 +315,7 @@ export default function Animales() {
   return (
     <div className="animales-container">
       {/* Overlay loader global (mínimo 2s) */}
-      {loadingAction && (
+      {loading && (
         <div className="loader-overlay">
           <img src="/dogloader.gif" alt="Cargando..." className="loader-gif" />
           <p className="loader-text">Procesando…</p>
@@ -402,7 +331,7 @@ export default function Animales() {
             className="lupa-btn"
             data-tooltip-id="tooltip"
             data-tooltip-content="Buscar por nombre, raza o estado"
-            disabled={loadingAction}
+            disabled={loading}
           >
             <img src="/icons/search.png" alt="Buscar" className="icono-btn" />
           </button>
@@ -415,7 +344,7 @@ export default function Animales() {
             autoFocus
             onChange={(e) => setBusqueda(e.target.value)}
             onBlur={() => !busqueda && setMostrarBusqueda(false)}
-            disabled={loadingAction}
+            disabled={loading}
           />
         )}
       </div>
@@ -430,7 +359,7 @@ export default function Animales() {
             <button
               key={tipo}
               ref={btnRef}
-              onClick={() => !loadingAction && handleClickFiltro(tipo, btnRef)}
+              onClick={() => !loading && handleClickFiltro(tipo, btnRef)}
               className={
                 (!filtroPrincipal && tipo === "TODOS") || filtroPrincipal === tipo ? "activo" : ""
               }
@@ -438,7 +367,7 @@ export default function Animales() {
               data-tooltip-content={
                 tipo === "PERRO" ? "Mostrar perros" : tipo === "GATO" ? "Mostrar gatos" : "Mostrar todos"
               }
-              disabled={loadingAction}
+              disabled={loading}
             >
               <img src={icon} alt={tipo} className="icono-btn" />
             </button>
@@ -459,14 +388,14 @@ export default function Animales() {
                 <button
                   onClick={() => handleFiltroSecundario("sexo", "MACHO")}
                   className={filtrosSecundarios.sexo === "MACHO" ? "activo" : ""}
-                  disabled={loadingAction}
+                  disabled={loading}
                 >
                   <MdMale />
                 </button>
                 <button
                   onClick={() => handleFiltroSecundario("sexo", "HEMBRA")}
                   className={filtrosSecundarios.sexo === "HEMBRA" ? "activo" : ""}
-                  disabled={loadingAction}
+                  disabled={loading}
                 >
                   <MdFemale />
                 </button>
@@ -476,21 +405,21 @@ export default function Animales() {
                 <button
                   onClick={() => handleFiltroSecundario("etapa", "CACHORRO")}
                   className={filtrosSecundarios.etapa === "CACHORRO" ? "activo" : ""}
-                  disabled={loadingAction}
+                  disabled={loading}
                 >
                   Cachorro
                 </button>
                 <button
                   onClick={() => handleFiltroSecundario("etapa", "ADULTO")}
                   className={filtrosSecundarios.etapa === "ADULTO" ? "activo" : ""}
-                  disabled={loadingAction}
+                  disabled={loading}
                 >
                   Adulto
                 </button>
                 <button
                   onClick={() => handleFiltroSecundario("etapa", "ANCIANO")}
                   className={filtrosSecundarios.etapa === "ANCIANO" ? "activo" : ""}
-                  disabled={loadingAction}
+                  disabled={loading}
                 >
                   Anciano
                 </button>
@@ -503,10 +432,10 @@ export default function Animales() {
       <div className="acciones">
         <button
           className="añadir-btn"
-          onClick={() => !loadingAction && abrirModalCrear()}
+          onClick={() => !loading && abrirModalCrear()}
           data-tooltip-id="tooltip"
           data-tooltip-content="Añadir nuevo animal"
-          disabled={loadingAction}
+          disabled={loading}
         >
           <FaPlus />
           <img src="/icons/pets.png" alt="Añadir" className="icono-btn" />
@@ -526,28 +455,28 @@ export default function Animales() {
               <p>{animal.raza}</p>
               <button
                 className="icon-btn info-btn"
-                onClick={() => !loadingAction && verDetallesAnimal(animal)}
+                onClick={() => !loading && verDetallesAnimal(animal)}
                 data-tooltip-id="tooltip"
                 data-tooltip-content="Ver detalles"
-                disabled={loadingAction}
+                disabled={loading}
               >
                 <FaCircleInfo />
               </button>
               <button
                 className="icon-btn editar-btn"
-                onClick={() => !loadingAction && abrirModalEditar(animal)}
+                onClick={() => !loading && abrirModalEditar(animal)}
                 data-tooltip-id="tooltip"
                 data-tooltip-content="Editar"
-                disabled={loadingAction}
+                disabled={loading}
               >
                 <FaPencilAlt />
               </button>
               <button
                 className="icon-btn eliminar-btn"
-                onClick={() => !loadingAction && eliminarAnimal(animal.id)}
+                onClick={() => !loading && eliminarAnimal(animal.id)}
                 data-tooltip-id="tooltip"
                 data-tooltip-content="Eliminar"
-                disabled={loadingAction}
+                disabled={loading}
               >
                 <FaTrashAlt />
               </button>
@@ -557,7 +486,7 @@ export default function Animales() {
       </div>
 
       {mostrarModal && (
-        <div className="modal-overlay" onClick={() => !loadingAction && setMostrarModal(false)}>
+        <div className="modal-overlay" onClick={() => !loading && setMostrarModal(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h3>{modoEdicion ? "Editar Animal" : "Nuevo Animal"}</h3>
             <form onSubmit={handleGuardarAnimal}>
@@ -567,14 +496,14 @@ export default function Animales() {
                 value={nuevoAnimal.nombre}
                 onChange={(e) => actualizarCampo("nombre", e.target.value)}
                 required
-                disabled={loadingAction}
+                disabled={loading}
               />
               <input
                 type="text"
                 placeholder="Raza"
                 value={nuevoAnimal.raza}
                 onChange={(e) => actualizarCampo("raza", e.target.value)}
-                disabled={loadingAction}
+                disabled={loading}
               />
               <div className="edad-container">
                 <input
@@ -583,33 +512,33 @@ export default function Animales() {
                   value={nuevoAnimal.edadCantidad}
                   onChange={(e) => actualizarCampo("edadCantidad", e.target.value)}
                   required
-                  disabled={loadingAction}
+                  disabled={loading}
                 />
                 <select
                   value={nuevoAnimal.unidadEdad}
                   onChange={(e) => actualizarCampo("unidadEdad", e.target.value)}
-                  disabled={loadingAction}
+                  disabled={loading}
                 >
                   <option value="ANIOS">Años</option>
                   <option value="MESES">Meses</option>
                 </select>
               </div>
-              <select value={nuevoAnimal.tipo} onChange={(e) => actualizarCampo("tipo", e.target.value)} disabled={loadingAction}>
+              <select value={nuevoAnimal.tipo} onChange={(e) => actualizarCampo("tipo", e.target.value)} disabled={loading}>
                 <option value="PERRO">Perro</option>
                 <option value="GATO">Gato</option>
               </select>
-              <select value={nuevoAnimal.sexo} onChange={(e) => actualizarCampo("sexo", e.target.value)} disabled={loadingAction}>
+              <select value={nuevoAnimal.sexo} onChange={(e) => actualizarCampo("sexo", e.target.value)} disabled={loading}>
                 <option value="MACHO">Macho</option>
                 <option value="HEMBRA">Hembra</option>
               </select>
-              <select value={nuevoAnimal.estado} onChange={(e) => actualizarCampo("estado", e.target.value)} disabled={loadingAction}>
+              <select value={nuevoAnimal.estado} onChange={(e) => actualizarCampo("estado", e.target.value)} disabled={loading}>
                 <option value="EN_ADOPCION">En adopción</option>
                 <option value="ADOPTADO">Adoptado</option>
                 <option value="EN_CASA_DE_ACOGIDA">En casa de acogida</option>
               </select>
 
               <div className="foto-uploader">
-                <label className={`btn-archivo ${loadingAction ? "disabled" : ""}`} title="Subir foto">
+                <label className={`btn-archivo ${loading ? "disabled" : ""}`} title="Subir foto">
                   <input
                     type="file"
                     accept="image/*"
@@ -619,7 +548,7 @@ export default function Animales() {
                       setPreviewFoto(f ? URL.createObjectURL(f) : (nuevoAnimal.fotoPerfilUrl || ""));
                     }}
                     style={{ display: "none" }}
-                    disabled={loadingAction}
+                    disabled={loading}
                   />
                   <i className="fas fa-camera"></i> <LuImagePlus />
                 </label>
@@ -638,13 +567,13 @@ export default function Animales() {
                 placeholder="Descripción"
                 value={nuevoAnimal.descripcion}
                 onChange={(e) => actualizarCampo("descripcion", e.target.value)}
-                disabled={loadingAction}
+                disabled={loading}
               />
               <div className="modal-actions">
-                <button type="submit" disabled={loadingAction}>
+                <button type="submit" disabled={loading}>
                   {modoEdicion ? "Guardar cambios" : "Crear"}
                 </button>
-                <button type="button" onClick={() => setMostrarModal(false)} disabled={loadingAction}>
+                <button type="button" onClick={() => setMostrarModal(false)} disabled={loading}>
                   Cancelar
                 </button>
               </div>

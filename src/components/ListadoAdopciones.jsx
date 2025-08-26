@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { showConfirm, showSuccess, showError } from "../utils/alerts";
+import { showConfirm } from "../utils/alerts";
 import { FaTrashAlt } from "react-icons/fa";
 import { FaRegFilePdf } from "react-icons/fa6";
 import "./styles/ListadoAdopciones.css";
@@ -12,12 +12,16 @@ import {
 } from "@tanstack/react-table";
 import { generarPDF } from "../utils/generatePDF.js";
 import { API_URL } from "../utils/config.js";
+import { useOneFlightLoader } from "../hooks/useOneFlightLoader";
 
 export default function ListadoAdopciones() {
   const [adopciones, setAdopciones] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingFetch, setLoadingFetch] = useState(true);
   const [columnFilters, setColumnFilters] = useState([]);
   const [deletingIds, setDeletingIds] = useState(new Set());
+
+  // loader de acciones (eliminar, etc.)
+  const { loading, runWithLoader, success, error } = useOneFlightLoader({ minMs: 2000 });
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -27,11 +31,11 @@ export default function ListadoAdopciones() {
       .then((res) => res.json())
       .then((data) => {
         setAdopciones(data);
-        setLoading(false);
+        setLoadingFetch(false);
       })
       .catch((err) => {
         console.error("Error al cargar adopciones:", err);
-        setLoading(false);
+        setLoadingFetch(false);
       });
   }, []);
 
@@ -66,49 +70,50 @@ export default function ListadoAdopciones() {
   };
 
   const handleEliminarAdopcion = async (id) => {
-    // Confirmación
     const { isConfirmed } = await showConfirm(
       "¿Eliminar adopción?",
       "Esta acción no se puede deshacer."
     );
     if (!isConfirmed) return;
 
-    try {
-      setDeletingIds((prev) => new Set(prev).add(id));
+    setDeletingIds((prev) => new Set(prev).add(id));
 
-      const token = localStorage.getItem("token");
-      const res = await fetch(`${API_URL}/adopciones/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+    await runWithLoader(async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(`${API_URL}/adopciones/${id}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-      if (res.ok) {
-        // 204 No Content o 200 OK
-        setAdopciones((prev) => prev.filter((a) => a.id !== id));
-        await showSuccess("Eliminado", "La adopción se eliminó correctamente.");
-      } else {
-        // Intenta leer el cuerpo para mensaje más útil
-        let detalle = "";
-        try { detalle = await res.text(); } catch (_) { }
-        const msgPorEstado =
-          res.status === 403 ? "No tienes permisos para eliminar."
-            : res.status === 404 ? "La adopción no existe o ya fue eliminada."
-              : res.status === 409 ? "No se puede eliminar por una restricción."
-                : "Intenta nuevamente en unos segundos.";
-        await showError(
-          `Error ${res.status}`,
-          detalle?.trim() ? detalle : msgPorEstado
-        );
+        if (res.ok) {
+          setAdopciones((prev) => prev.filter((a) => a.id !== id));
+          success("Eliminado", "La adopción se eliminó correctamente.");
+        } else {
+          let detalle = "";
+          try {
+            detalle = await res.text();
+          } catch (_) {}
+          const msgPorEstado =
+            res.status === 403
+              ? "No tienes permisos para eliminar."
+              : res.status === 404
+              ? "La adopción no existe o ya fue eliminada."
+              : res.status === 409
+              ? "No se puede eliminar por una restricción."
+              : "Intenta nuevamente en unos segundos.";
+          error(`Error ${res.status}`, detalle?.trim() ? detalle : msgPorEstado);
+        }
+      } catch (err) {
+        error("Error inesperado", err?.message ?? "Fallo de red.");
+      } finally {
+        setDeletingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
       }
-    } catch (err) {
-      await showError("Error inesperado", err?.message ?? "Fallo de red.");
-    } finally {
-      setDeletingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(id);
-        return next;
-      });
-    }
+    });
   };
 
   const columns = useMemo(
@@ -116,8 +121,7 @@ export default function ListadoAdopciones() {
       {
         id: "fechaAdopcion",
         accessorFn: (row) => row.fechaAdopcion,
-        cell: ({ getValue }) =>
-          new Date(getValue()).toLocaleDateString("es-ES"),
+        cell: ({ getValue }) => new Date(getValue()).toLocaleDateString("es-ES"),
         enableColumnFilter: true,
         filterFn: (row, id, filterValue) => {
           if (!filterValue) return true;
@@ -209,20 +213,24 @@ export default function ListadoAdopciones() {
       },
       {
         header: "Acciones",
-        cell: ({ row }) => (
-          <div>
-            <button onClick={() => handleAbrirPDF(row.original)}>
-              <FaRegFilePdf className="icono-accion" />
-            </button>
-            <button onClick={() => handleEliminarAdopcion(row.original.id)}>
-              <FaTrashAlt className="icono-accion" />
-            </button>
-          </div>
-        ),
+        cell: ({ row }) => {
+          const id = row.original.id;
+          const disabled = loading || deletingIds.has(id);
+          return (
+            <div>
+              <button onClick={() => handleAbrirPDF(row.original)} disabled={disabled}>
+                <FaRegFilePdf className="icono-accion" />
+              </button>
+              <button onClick={() => handleEliminarAdopcion(id)} disabled={disabled}>
+                <FaTrashAlt className="icono-accion" />
+              </button>
+            </div>
+          );
+        },
         enableColumnFilter: false,
       },
     ],
-    [diasUnicos, mesesUnicos, añosUnicos]
+    [diasUnicos, mesesUnicos, añosUnicos, loading, deletingIds]
   );
 
   const table = useReactTable({
@@ -234,42 +242,37 @@ export default function ListadoAdopciones() {
     getPaginationRowModel: getPaginationRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     initialState: {
-      pagination: {
-        pageSize: 8, // Solo 8 filas por página
-      },
+      pagination: { pageSize: 8 },
     },
   });
 
-  if (loading) return <p>Cargando adopciones...</p>;
+  if (loadingFetch) return <p>Cargando adopciones...</p>;
   if (adopciones.length === 0) return <p>No hay adopciones registradas.</p>;
 
   return (
     <div className="listado-adopciones-container">
-      <table
-        border={1}
-        cellPadding={5}
-        style={{ borderCollapse: "collapse", width: "100%" }}
-      >
+      {/* Overlay loader global */}
+      {loading && (
+        <div className="loader-overlay">
+          <img src="/dogloader.gif" alt="Cargando..." className="loader-gif" />
+          <p className="loader-text">Procesando…</p>
+        </div>
+      )}
+
+      <table border={1} cellPadding={5} style={{ borderCollapse: "collapse", width: "100%" }}>
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
               {headerGroup.headers.map((header) => (
                 <th key={header.id} style={{ verticalAlign: "top" }}>
-                  {flexRender(
-                    header.column.columnDef.header,
-                    header.getContext()
-                  )}
-                  {/* Para columnas que no sean fecha, el input filtro a la derecha */}
-                  {header.column.id !== "fechaAdopcion" &&
-                    header.column.getCanFilter() ? (
+                  {flexRender(header.column.columnDef.header, header.getContext())}
+                  {header.column.id !== "fechaAdopcion" && header.column.getCanFilter() ? (
                     <div className="header-filtro-contenedor">
                       <span style={{ flex: "1 0 auto" }}></span>
                       <input
                         className={`filtro-columna filtro-${header.column.id}`}
                         value={header.column.getFilterValue() ?? ""}
-                        onChange={(e) =>
-                          header.column.setFilterValue(e.target.value)
-                        }
+                        onChange={(e) => header.column.setFilterValue(e.target.value)}
                         placeholder={`Buscar ${header.column.columnDef.header}`}
                       />
                     </div>
@@ -294,21 +297,14 @@ export default function ListadoAdopciones() {
       </table>
 
       <div className="pagination-buttons">
-        <button
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
+        <button onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage() || loading}>
           {"<"}
         </button>
-        <button
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
+        <button onClick={() => table.nextPage()} disabled={!table.getCanNextPage() || loading}>
           {">"}
         </button>
         <span className="pagination-info">
-          Página {table.getState().pagination.pageIndex + 1} de{" "}
-          {table.getPageCount()}
+          Página {table.getState().pagination.pageIndex + 1} de {table.getPageCount()}
         </span>
       </div>
     </div>

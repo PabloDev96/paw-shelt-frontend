@@ -18,9 +18,9 @@ import "./styles/Citas.css";
 import { registerLocale } from "react-datepicker";
 import es from "date-fns/locale/es";
 import { API_URL } from "../utils/config.js";
+import { useOneFlightLoader } from "../hooks/useOneFlightLoader";
 
 registerLocale("es", es);
-
 
 export default function Citas() {
   const hoy = new Date();
@@ -40,12 +40,10 @@ export default function Citas() {
   const [filtroAnio, setFiltroAnio] = useState(hoy.getFullYear());
   const [mostrarSubformAdoptante, setMostrarSubformAdoptante] = useState(false);
 
-  const [errorFechaInvalida, setErrorFechaInvalida] = useState(false);
-  const [mostrarModalFechaInvalida, setMostrarModalFechaInvalida] = useState(false);
-
-
-
   const token = localStorage.getItem("token");
+
+  // Loader mínimo 2s + anti reentradas + alertas tras loader
+  const { loading, runWithLoader, success, error: alertError } = useOneFlightLoader({ minMs: 2000 });
 
   useEffect(() => {
     if (filtroDia && filtroMes && filtroAnio) {
@@ -65,6 +63,10 @@ export default function Citas() {
     const res = await fetch(`${API_URL}/citas`, {
       headers: { Authorization: `Bearer ${token}` },
     });
+    if (!res.ok) {
+      showError("Error", "No se pudieron cargar las citas.");
+      return;
+    }
     const data = await res.json();
     setCitas(data);
   };
@@ -73,14 +75,23 @@ export default function Citas() {
     const res = await fetch(`${API_URL}/adoptantes`, {
       headers: { Authorization: `Bearer ${token}` },
     });
+    if (!res.ok) {
+      showError("Error", "No se pudieron cargar los adoptantes.");
+      return [];
+    }
     const data = await res.json();
     setAdoptantes(data);
     return data;
   };
 
   const handleCitaDrop = async (info) => {
-    const evento = info.event;
+    // Si el loader está activo, impedimos mover
+    if (loading) {
+      info.revert();
+      return;
+    }
 
+    const evento = info.event;
     const id = parseInt(evento.id);
     const cita = citas.find((c) => c.id === id);
     if (!cita) return;
@@ -103,22 +114,24 @@ export default function Citas() {
       personaAdoptanteId: cita.personaAdoptanteId,
     };
 
-    const res = await fetch(`${API_URL}/citas/${id}`, {
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
+    await runWithLoader(async () => {
+      const res = await fetch(`${API_URL}/citas/${id}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
 
-    if (res.ok) {
-      fetchCitas();
-      showSuccess("Cita actualizada");
-    } else {
-      showError("Error al actualizar la cita");
-      info.revert();
-    }
+      if (res.ok) {
+        await fetchCitas();
+        success("Cita actualizada", "Se guardaron los cambios.");
+      } else {
+        alertError("Error al actualizar la cita");
+        info.revert();
+      }
+    });
   };
 
   const handleCrearAdoptante = async () => {
@@ -138,39 +151,39 @@ export default function Citas() {
       return showError("Teléfono no válido", "Debe contener exactamente 9 dígitos numéricos.");
     }
 
-    const res = await fetch(`${API_URL}/adoptantes`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(nuevoAdoptante),
-    });
+    await runWithLoader(async () => {
+      const res = await fetch(`${API_URL}/adoptantes`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(nuevoAdoptante),
+      });
 
-    if (res.ok) {
-      setNuevoAdoptante({ nombre: "", email: "", telefono: "", direccion: "" });
+      if (res.ok) {
+        setNuevoAdoptante({ nombre: "", email: "", telefono: "", direccion: "" });
 
-      // refresca y selecciona automáticamente al recién creado
-      const lista = await fetchAdoptantes();
-      const recienCreado = lista.find((a) => a.email === email);
-      if (recienCreado) {
-        setAdoptanteSeleccionado(recienCreado);
+        // refresca y selecciona automáticamente al recién creado
+        const lista = await fetchAdoptantes();
+        const recienCreado = lista.find((a) => a.email === email);
+        if (recienCreado) {
+          setAdoptanteSeleccionado(recienCreado);
+        }
+
+        // cierra subform y modal (si estuviera abierto)
+        setMostrarSubformAdoptante(false);
+        setMostrarModalAdoptante(false);
+
+        success("Adoptante creado correctamente");
+      } else {
+        alertError("Error al crear adoptante", "Revisa los datos o el servidor.");
       }
-
-      // cierra el subform interno si estaba abierto
-      setMostrarSubformAdoptante(false);
-
-      // cierra el modal independiente si estabas usándolo
-      setMostrarModalAdoptante(false);
-
-      showSuccess("Adoptante creado correctamente");
-    } else {
-      showError("Error al crear adoptante", "Revisa los datos o el servidor.");
-    }
+    });
   };
 
   const formatDateForLocalDateTime = (date) => {
-    const pad = (n) => String(n).padStart(2, '0');
+    const pad = (n) => String(n).padStart(2, "0");
     const year = date.getFullYear();
     const month = pad(date.getMonth() + 1);
     const day = pad(date.getDate());
@@ -181,14 +194,12 @@ export default function Citas() {
   };
 
   const haySolapamiento = (nuevaInicio, nuevaFin, idIgnorado = null) => {
-    return citas.some(cita => {
+    return citas.some((cita) => {
       if (cita.id === idIgnorado) return false;
 
       const inicioExistente = new Date(cita.fechaHoraInicio);
       const finExistente = new Date(cita.fechaHoraFin);
-      return (
-        nuevaInicio < finExistente && nuevaFin > inicioExistente
-      );
+      return nuevaInicio < finExistente && nuevaFin > inicioExistente;
     });
   };
 
@@ -222,34 +233,32 @@ export default function Citas() {
       personaAdoptanteId: adoptanteSeleccionado.id,
     };
 
-    const res = await fetch(`${API_URL}/citas`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
+    await runWithLoader(async () => {
+      const res = await fetch(`${API_URL}/citas`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (res.ok) {
+        setMostrarModalCita(false);
+        setNuevaCita({ descripcion: "", fechaHoraInicio: "", fechaHoraFin: "" });
+        setAdoptanteSeleccionado(null);
+        setBusqueda("");
+        await fetchCitas();
+        success("Cita creada correctamente");
+      } else {
+        alertError("Error al crear la cita", "Revisa los datos o el servidor.");
+      }
     });
-
-    if (res.ok) {
-      setMostrarModalCita(false);
-      setNuevaCita({ descripcion: "", fechaHoraInicio: "", fechaHoraFin: "" });
-      setAdoptanteSeleccionado(null);
-      setBusqueda("");
-      fetchCitas();
-      showSuccess("Cita creada correctamente");
-    } else {
-      showError("Error al crear la cita", "Revisa los datos o el servidor.");
-    }
   };
-
-
 
   const abrirModalEditar = (cita) => {
     setCitaAEditar(cita);
-    setAdoptanteSeleccionado(
-      adoptantes.find((a) => a.id === cita.personaAdoptanteId)
-    );
+    setAdoptanteSeleccionado(adoptantes.find((a) => a.id === cita.personaAdoptanteId));
     setNuevaCita({
       descripcion: cita.descripcion,
       fechaHoraInicio: cita.fechaHoraInicio,
@@ -286,46 +295,48 @@ export default function Citas() {
       personaAdoptanteId: adoptanteSeleccionado.id,
     };
 
-    const res = await fetch(`${API_URL}/citas/${citaAEditar.id}`, {
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
+    await runWithLoader(async () => {
+      const res = await fetch(`${API_URL}/citas/${citaAEditar.id}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
 
-    if (res.ok) {
-      setMostrarModalEditar(false);
-      setCitaAEditar(null);
-      resetCitaForm();
-      fetchCitas();
-      showSuccess("Cita actualizada correctamente");
-    } else {
-      showError("Error al actualizar la cita");
-    }
+      if (res.ok) {
+        setMostrarModalEditar(false);
+        setCitaAEditar(null);
+        resetCitaForm();
+        await fetchCitas();
+        success("Cita actualizada correctamente");
+      } else {
+        alertError("Error al actualizar la cita");
+      }
+    });
   };
 
   const eliminarCita = async (id) => {
     const confirmado = await showConfirm("¿Eliminar cita?", "Esta acción no se puede deshacer.");
-
     if (!confirmado.isConfirmed) return;
 
-    const res = await fetch(`${API_URL}/citas/${id}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+    await runWithLoader(async () => {
+      const res = await fetch(`${API_URL}/citas/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (res.ok) {
+        await fetchCitas();
+        success("Cita eliminada");
+      } else {
+        alertError("Error al eliminar cita");
+      }
     });
-
-    if (res.ok) {
-      fetchCitas();
-      showSuccess("Cita eliminada");
-    } else {
-      showError("Error al eliminar cita");
-    }
   };
-
 
   const resetCitaForm = () => {
     setNuevaCita({ descripcion: "", fechaHoraInicio: "", fechaHoraFin: "" });
@@ -369,9 +380,7 @@ export default function Citas() {
     { value: 12, label: "Diciembre" },
   ];
 
-  const anios = Array.from(
-    new Set(citas.map((cita) => new Date(cita.fechaHoraInicio).getFullYear()))
-  )
+  const anios = Array.from(new Set(citas.map((cita) => new Date(cita.fechaHoraInicio).getFullYear())))
     .sort((a, b) => b - a)
     .map((a) => ({ value: a, label: `${a}` }));
 
@@ -387,9 +396,7 @@ export default function Citas() {
               classNamePrefix="citas"
               options={adoptantes.map((a) => ({ value: a.id, label: a.nombre }))}
               onChange={(selectedOption) =>
-                setAdoptanteSeleccionado(
-                  adoptantes.find((a) => a.id === selectedOption?.value)
-                )
+                setAdoptanteSeleccionado(adoptantes.find((a) => a.id === selectedOption?.value) || null)
               }
               value={
                 adoptanteSeleccionado
@@ -398,6 +405,7 @@ export default function Citas() {
               }
               placeholder="Seleccionar adoptante..."
               isClearable
+              isDisabled={loading}
             />
           </div>
 
@@ -407,6 +415,7 @@ export default function Citas() {
             className="citas-btn citas-btn-inline"
             onClick={() => setMostrarSubformAdoptante((v) => !v)}
             title="Añadir adoptante"
+            disabled={loading}
           >
             <FaPlus />
             <IoMdPerson className="citas-icon" />
@@ -422,26 +431,34 @@ export default function Citas() {
                 placeholder="Nombre"
                 value={nuevoAdoptante.nombre}
                 onChange={(e) => setNuevoAdoptante({ ...nuevoAdoptante, nombre: e.target.value })}
+                disabled={loading}
               />
               <input
                 placeholder="Email"
                 value={nuevoAdoptante.email}
                 onChange={(e) => setNuevoAdoptante({ ...nuevoAdoptante, email: e.target.value })}
+                disabled={loading}
               />
               <input
                 placeholder="Teléfono"
                 value={nuevoAdoptante.telefono}
                 onChange={(e) => setNuevoAdoptante({ ...nuevoAdoptante, telefono: e.target.value })}
+                disabled={loading}
               />
               <input
                 placeholder="Dirección"
                 value={nuevoAdoptante.direccion}
                 onChange={(e) => setNuevoAdoptante({ ...nuevoAdoptante, direccion: e.target.value })}
+                disabled={loading}
               />
             </div>
             <div className="citas-modal-actions">
-              <button type="button" onClick={handleCrearAdoptante}>Guardar adoptante</button>
-              <button type="button" onClick={() => setMostrarSubformAdoptante(false)}>Cancelar</button>
+              <button type="button" onClick={handleCrearAdoptante} disabled={loading}>
+                Guardar adoptante
+              </button>
+              <button type="button" onClick={() => setMostrarSubformAdoptante(false)} disabled={loading}>
+                Cancelar
+              </button>
             </div>
           </div>
         )}
@@ -456,6 +473,7 @@ export default function Citas() {
           locale="es"
           placeholderText="Inicio"
           className="citas-datepicker"
+          disabled={loading}
         />
 
         <DatePicker
@@ -468,16 +486,20 @@ export default function Citas() {
           locale="es"
           placeholderText="Fin"
           className="citas-datepicker"
+          disabled={loading}
         />
 
         <textarea
           placeholder="Descripción"
           value={nuevaCita.descripcion}
           onChange={(e) => setNuevaCita({ ...nuevaCita, descripcion: e.target.value })}
+          disabled={loading}
         />
 
         <div className="citas-modal-actions">
-          <button onClick={modoEditar ? handleActualizarCita : handleCrearCita}>Guardar</button>
+          <button onClick={modoEditar ? handleActualizarCita : handleCrearCita} disabled={loading}>
+            Guardar
+          </button>
           <button
             onClick={() => {
               modoEditar ? setMostrarModalEditar(false) : setMostrarModalCita(false);
@@ -485,6 +507,7 @@ export default function Citas() {
               resetCitaForm();
               setMostrarSubformAdoptante(false);
             }}
+            disabled={loading}
           >
             Cancelar
           </button>
@@ -504,14 +527,21 @@ export default function Citas() {
     );
   };
 
-
   return (
     <div className="citas-container">
+      {/* Overlay loader global (mínimo 2s) */}
+      {loading && (
+        <div className="loader-overlay">
+          <img src="/dogloader.gif" alt="Cargando..." className="loader-gif" />
+          <p className="loader-text">Procesando…</p>
+        </div>
+      )}
 
       <div className="citas-vista-switch">
         <button
           className={modoVista === "listado" ? "activo" : ""}
           onClick={() => setModoVista("listado")}
+          disabled={loading}
         >
           <FaList style={{ marginRight: "8px" }} />
           Ver Listado
@@ -519,14 +549,13 @@ export default function Citas() {
         <button
           className={modoVista === "calendario" ? "activo" : ""}
           onClick={() => setModoVista("calendario")}
+          disabled={loading}
         >
           Calendario
         </button>
       </div>
 
-
       {/* VISTA DE LISTADO */}
-
       {modoVista === "listado" && (
         <>
           <div className="citas-filtros">
@@ -538,6 +567,7 @@ export default function Citas() {
               isClearable
               className="citas-select"
               classNamePrefix="citas"
+              isDisabled={loading}
             />
             <Select
               options={meses}
@@ -547,6 +577,7 @@ export default function Citas() {
               isClearable
               className="citas-select"
               classNamePrefix="citas"
+              isDisabled={loading}
             />
             <Select
               options={anios}
@@ -556,6 +587,7 @@ export default function Citas() {
               isClearable
               className="citas-select"
               classNamePrefix="citas"
+              isDisabled={loading}
             />
           </div>
 
@@ -565,6 +597,7 @@ export default function Citas() {
               onClick={() => setMostrarModalCita(true)}
               data-tooltip-id="tooltip"
               data-tooltip-content="Crear Cita"
+              disabled={loading}
             >
               <FaPlus />
               <IoCalendarOutline className="citas-icon" />
@@ -584,73 +617,93 @@ export default function Citas() {
                 return <p>No hay citas registradas.</p>;
               }
 
-              return (
-                citasFiltradas
-                  .sort((a, b) => new Date(a.fechaHoraInicio) - new Date(b.fechaHoraInicio))
-                  .map((cita) => {
-                    const esExpirada = new Date(cita.fechaHoraFin) < new Date();
-                    return (
-                      <div
-                        key={cita.id}
-                        className={`citas-card ${esExpirada ? "cita-expirada" : ""}`}
-                      >
-                        <div className="citas-info">
-                          <h3>{cita.titulo}</h3>
-                          <p>{new Date(cita.fechaHoraInicio).toLocaleDateString("es-ES")}</p>
-                          <p>
-                            {new Date(cita.fechaHoraInicio).toLocaleTimeString("es-ES", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                              hour12: false,
-                            })}{" - "}
-                            {new Date(cita.fechaHoraFin).toLocaleTimeString("es-ES", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                              hour12: false,
-                            })}
-                          </p>
-                          <p>{cita.descripcion}</p>
-                          <div className="citas-botones">
-                            <button
-                              className="icon-btn editar-btn"
-                              onClick={() => abrirModalEditar(cita)}
-                              disabled={esExpirada}
-                              data-tooltip-id="tooltip"
-                              data-tooltip-content={esExpirada ? "Cita expirada" : "Editar"}
-                            >
-                              <FaPencilAlt />
-                            </button>
-                            <button
-                              className="icon-btn eliminar-btn"
-                              onClick={() => eliminarCita(cita.id)}
-                              disabled={esExpirada}
-                              data-tooltip-id="tooltip"
-                              data-tooltip-content={esExpirada ? "Cita expirada" : "Eliminar"}
-                            >
-                              <FaTrashAlt />
-                            </button>
-                          </div>
+              return citasFiltradas
+                .sort((a, b) => new Date(a.fechaHoraInicio) - new Date(b.fechaHoraInicio))
+                .map((cita) => {
+                  const esExpirada = new Date(cita.fechaHoraFin) < new Date();
+                  const disableActions = loading || esExpirada;
+                  return (
+                    <div key={cita.id} className={`citas-card ${esExpirada ? "cita-expirada" : ""}`}>
+                      <div className="citas-info">
+                        <h3>{cita.titulo}</h3>
+                        <p>{new Date(cita.fechaHoraInicio).toLocaleDateString("es-ES")}</p>
+                        <p>
+                          {new Date(cita.fechaHoraInicio).toLocaleTimeString("es-ES", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: false,
+                          })}{" "}
+                          -{" "}
+                          {new Date(cita.fechaHoraFin).toLocaleTimeString("es-ES", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: false,
+                          })}
+                        </p>
+                        <p>{cita.descripcion}</p>
+                        <div className="citas-botones">
+                          <button
+                            className="icon-btn editar-btn"
+                            onClick={() => abrirModalEditar(cita)}
+                            disabled={disableActions}
+                            data-tooltip-id="tooltip"
+                            data-tooltip-content={esExpirada ? "Cita expirada" : "Editar"}
+                          >
+                            <FaPencilAlt />
+                          </button>
+                          <button
+                            className="icon-btn eliminar-btn"
+                            onClick={() => eliminarCita(cita.id)}
+                            disabled={disableActions}
+                            data-tooltip-id="tooltip"
+                            data-tooltip-content={esExpirada ? "Cita expirada" : "Eliminar"}
+                          >
+                            <FaTrashAlt />
+                          </button>
                         </div>
                       </div>
-                    );
-                  })
-              );
+                    </div>
+                  );
+                });
             })()}
           </div>
 
-
-          {/* Modal Crear Adoptante */}
+          {/* Modal Crear Adoptante (modo listado) */}
           {mostrarModalAdoptante && (
             <div className="citas-modal-overlay">
               <div className="citas-modal">
                 <h3>Nueva Persona Adoptante</h3>
-                <input placeholder="Nombre" value={nuevoAdoptante.nombre} onChange={(e) => setNuevoAdoptante({ ...nuevoAdoptante, nombre: e.target.value })} />
-                <input placeholder="Email" value={nuevoAdoptante.email} onChange={(e) => setNuevoAdoptante({ ...nuevoAdoptante, email: e.target.value })} />
-                <input placeholder="Teléfono" value={nuevoAdoptante.telefono} onChange={(e) => setNuevoAdoptante({ ...nuevoAdoptante, telefono: e.target.value })} />
-                <input placeholder="Dirección" value={nuevoAdoptante.direccion} onChange={(e) => setNuevoAdoptante({ ...nuevoAdoptante, direccion: e.target.value })} />
+                <input
+                  placeholder="Nombre"
+                  value={nuevoAdoptante.nombre}
+                  onChange={(e) => setNuevoAdoptante({ ...nuevoAdoptante, nombre: e.target.value })}
+                  disabled={loading}
+                />
+                <input
+                  placeholder="Email"
+                  value={nuevoAdoptante.email}
+                  onChange={(e) => setNuevoAdoptante({ ...nuevoAdoptante, email: e.target.value })}
+                  disabled={loading}
+                />
+                <input
+                  placeholder="Teléfono"
+                  value={nuevoAdoptante.telefono}
+                  onChange={(e) => setNuevoAdoptante({ ...nuevoAdoptante, telefono: e.target.value })}
+                  disabled={loading}
+                />
+                <input
+                  placeholder="Dirección"
+                  value={nuevoAdoptante.direccion}
+                  onChange={(e) => setNuevoAdoptante({ ...nuevoAdoptante, direccion: e.target.value })}
+                  disabled={loading}
+                />
                 <div className="citas-modal-actions">
-                  <button onClick={handleCrearAdoptante}>Guardar</button>
-                  <button onClick={() => setMostrarModalAdoptante(false)}>Cancelar</button>
+                  <button onClick={handleCrearAdoptante} disabled={loading}>
+                    Guardar
+                  </button>
+                  <button onClick={() => setMostrarModalAdoptante(false)} disabled={loading}>
+                    Cancelar
+                  </button>
                 </div>
               </div>
             </div>
@@ -661,17 +714,17 @@ export default function Citas() {
 
           {/* Modal Editar Cita */}
           {mostrarModalEditar && renderCitaModal(true)}
-
         </>
       )}
+
       {modoVista === "calendario" && (
         <div className="citas-calendario">
           <FullCalendar
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
             initialView="timeGridWeek"
-            editable={true}
+            editable={!loading}
+            selectable={!loading}
             allDaySlot={false}
-            selectable={true}
             headerToolbar={{
               left: "prev,next today",
               center: "title",
@@ -694,6 +747,7 @@ export default function Citas() {
               },
             }))}
             dateClick={(info) => {
+              if (loading) return;
               setMostrarModalCita(true);
               setNuevaCita({
                 ...nuevaCita,
@@ -702,6 +756,7 @@ export default function Citas() {
               });
             }}
             eventClick={(info) => {
+              if (loading) return;
               const cita = citas.find((c) => c.id === parseInt(info.event.id));
               if (cita) abrirModalEditar(cita);
             }}
