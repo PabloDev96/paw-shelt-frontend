@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { showError } from "../utils/alerts";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import "./styles/Login.css";
@@ -23,6 +24,7 @@ const waitMinTime = (start, action) => {
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [serverReady, setServerReady] = useState(false);
   const [isWaking, setIsWaking] = useState(true);
@@ -188,17 +190,33 @@ export default function Login() {
         />
 
         <label>Contraseña</label>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Ingresa tu contraseña"
-          disabled={disabled}
-        />
+        <div className="password-field">
+          <input
+            type={showPassword ? "text" : "password"}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Ingresa tu contraseña"
+            disabled={disabled}
+            aria-label="Contraseña"
+          />
+
+          <button
+            type="button"
+            className="toggle-visibility"
+            onClick={() => setShowPassword((v) => !v)}
+            aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+            aria-pressed={showPassword}
+            title={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+            disabled={disabled}
+          >
+            {showPassword ? <FaEye /> : <FaEyeSlash />}
+          </button>
+        </div>
 
         <button type="submit" disabled={disabled}>
           {serverReady && !isSubmitting ? "Entrar" : "Espere…"}
         </button>
+
       </form>
     </div>
   );
