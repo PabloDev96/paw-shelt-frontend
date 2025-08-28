@@ -93,15 +93,15 @@ export default function ListadoAdopciones() {
           let detalle = "";
           try {
             detalle = await res.text();
-          } catch (_) {}
+          } catch (_) { }
           const msgPorEstado =
             res.status === 403
               ? "No tienes permisos para eliminar."
               : res.status === 404
-              ? "La adopción no existe o ya fue eliminada."
-              : res.status === 409
-              ? "No se puede eliminar por una restricción."
-              : "Intenta nuevamente en unos segundos.";
+                ? "La adopción no existe o ya fue eliminada."
+                : res.status === 409
+                  ? "No se puede eliminar por una restricción."
+                  : "Intenta nuevamente en unos segundos.";
           error(`Error ${res.status}`, detalle?.trim() ? detalle : msgPorEstado);
         }
       } catch (err) {
@@ -259,42 +259,44 @@ export default function ListadoAdopciones() {
         </div>
       )}
 
-      <table border={1} cellPadding={5} style={{ borderCollapse: "collapse", width: "100%" }}>
-        <thead>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <th key={header.id} style={{ verticalAlign: "top" }}>
-                  {flexRender(header.column.columnDef.header, header.getContext())}
-                  {header.column.id !== "fechaAdopcion" && header.column.getCanFilter() ? (
-                    <div className="header-filtro-contenedor">
-                      <span style={{ flex: "1 0 auto" }}></span>
-                      <input
-                        className={`filtro-columna filtro-${header.column.id}`}
-                        value={header.column.getFilterValue() ?? ""}
-                        onChange={(e) => header.column.setFilterValue(e.target.value)}
-                        placeholder={`Buscar ${header.column.columnDef.header}`}
-                      />
-                    </div>
-                  ) : null}
-                </th>
-              ))}
-            </tr>
-          ))}
-        </thead>
+      <div className="tabla-scroll-wrapper">
+        <table border={1} cellPadding={5} style={{ borderCollapse: "collapse", width: "100%" }}>
+          <thead>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <th key={header.id} style={{ verticalAlign: "top" }}>
+                    {flexRender(header.column.columnDef.header, header.getContext())}
+                    {header.column.id !== "fechaAdopcion" && header.column.getCanFilter() ? (
+                      <div className="header-filtro-contenedor">
+                        <span style={{ flex: "1 0 auto" }}></span>
+                        <input
+                          className={`filtro-columna filtro-${header.column.id}`}
+                          value={header.column.getFilterValue() ?? ""}
+                          onChange={(e) => header.column.setFilterValue(e.target.value)}
+                          placeholder={`Buscar ${header.column.columnDef.header}`}
+                        />
+                      </div>
+                    ) : null}
+                  </th>
+                ))}
+              </tr>
+            ))}
+          </thead>
 
-        <tbody>
-          {table.getRowModel().rows.map((row) => (
-            <tr key={row.id}>
-              {row.getVisibleCells().map((cell) => (
-                <td key={cell.id}>
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+          <tbody>
+            {table.getRowModel().rows.map((row) => (
+              <tr key={row.id}>
+                {row.getVisibleCells().map((cell) => (
+                  <td key={cell.id}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       <div className="pagination-buttons">
         <button onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage() || loading}>

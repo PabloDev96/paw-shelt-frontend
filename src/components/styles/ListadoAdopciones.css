@@ -1,11 +1,10 @@
 .listado-adopciones-container table {
-  table-layout: auto; /* ancho basado en contenido */
-  width: auto;        /* no ocupar todo el contenedor */
-  max-width: 100%;    /* pero sin salirse */
+  table-layout: fixed;
+  width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  border-radius: 10px; /* solo la tabla */
-  overflow: hidden; /* para que el redondeo funcione */
+  border-radius: 10px;
+  overflow: hidden;
   font-size: 1rem;
   color: var(--light);
   background-color: var(--medium-light);
@@ -13,19 +12,17 @@
 
 .listado-adopciones-container thead th,
 .listado-adopciones-container tbody td {
-  white-space: nowrap;         /* no saltos de línea */
-  padding: 8px 12px;           /* menos padding para menos ancho */
-  min-width: 60px;             /* ancho mínimo base */
-  max-width: 180px;            /* límite máximo de ancho */
+  white-space: nowrap;
+  padding: 8px 12px;
   overflow: hidden;
-  text-overflow: ellipsis;     /* corta texto largo con "..." */
+  text-overflow: ellipsis;
   vertical-align: middle;
   text-align: left;
 }
 
 .listado-adopciones-container thead th {
-  font-size: 1rem;       /* tamaño de título adecuado */
-  font-weight: 600;      /* negrita */
+  font-size: 1rem;
+  font-weight: 600;
   background-color: var(--medium);
   color: var(--light);
   border-bottom: none;
@@ -44,7 +41,7 @@
 }
 
 .listado-adopciones-container tbody td {
-  color: inherit; /* toma el color del tr */
+  color: inherit;
 }
 
 .listado-adopciones-container tbody tr,
@@ -60,13 +57,19 @@
   border-bottom-right-radius: 10px;
 }
 
-/* Anchos mínimos personalizados por columna, ajusta si quieres */
-.listado-adopciones-container thead th:nth-child(1) { min-width: 80px; }  /* Fecha */
-.listado-adopciones-container thead th:nth-child(2) { min-width: 100px; } /* Animal */
-.listado-adopciones-container thead th:nth-child(3) { min-width: 120px; } /* Adoptante */
-.listado-adopciones-container thead th:nth-child(4) { min-width: 150px; } /* Observaciones */
-.listado-adopciones-container thead th:nth-child(5) { min-width: 80px; }  /* Acciones */
+/* Anchos fijos por columna */
+.listado-adopciones-container thead th:nth-child(1),
+.listado-adopciones-container tbody td:nth-child(1) { width: 170px; } /* Fecha */
+.listado-adopciones-container thead th:nth-child(2),
+.listado-adopciones-container tbody td:nth-child(2) { width: 170px; } /* Animal */
+.listado-adopciones-container thead th:nth-child(3),
+.listado-adopciones-container tbody td:nth-child(3) { width: 170px; } /* Adoptante */
+.listado-adopciones-container thead th:nth-child(4),
+.listado-adopciones-container tbody td:nth-child(4) { width: 230px; } /* Observaciones */
+.listado-adopciones-container thead th:nth-child(5),
+.listado-adopciones-container tbody td:nth-child(5) { width: 60px; } /* Acciones */
 
+/* Buscador */
 .listado-adopciones-container .listado-adopciones-busqueda {
   padding: 0.5rem 0.8rem;
   border-radius: 8px;
@@ -85,6 +88,7 @@
   box-shadow: 0 0 5px var(--medium-dark);
 }
 
+/* Paginación */
 .listado-adopciones-container .pagination-buttons {
   margin-top: 10px;
   display: flex;
@@ -99,7 +103,7 @@
   border: none;
   padding: 0.3rem 0.8rem;
   border-radius: 6px;
-  color: white;
+  color: black;
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.2s ease;
@@ -121,6 +125,7 @@
   user-select: none;
 }
 
+/* Botones de acciones en celdas */
 .listado-adopciones-container div > button {
   background-color: var(--medium-light);
   border: none;
@@ -131,7 +136,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem; /* tamaño iconos */
+  font-size: 1.1rem;
   color: var(--dark);
   transition: background-color 0.2s ease;
 }
@@ -159,6 +164,7 @@
   color: var(--error);
 }
 
+/* Filtros de cabecera */
 .filtro-columna {
   width: 97px;
   padding: 4px 8px;
@@ -176,12 +182,32 @@
   box-shadow: 0 0 5px var(--medium-dark);
 }
 
-/* Filtro de Animal */
-.filtro-animalNombre {
-  width: 290px;
+.filtro-animalNombre { width: 290px; }
+
+.filtro-adoptanteNombre { width: 290px; }
+
+/* Scroll horizontal SOLO en móviles */
+@media (max-width: 768px) {
+  .tabla-scroll-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tabla-scroll-wrapper table {
+    min-width: 820px;
+  }
 }
 
-/* Filtro de Adoptante */
-.filtro-adoptanteNombre {
-  width: 290px;
+/* filtros más pequeños en móviles */
+@media (max-width: 600px) {
+  .filtro-columna {
+    width: 52px;
+    font-size: 0.75rem;
+    padding: 2px 4px;
+  }
+
+  .filtro-animalNombre,
+  .filtro-adoptanteNombre {
+    width: 160px;
+  }
 }
