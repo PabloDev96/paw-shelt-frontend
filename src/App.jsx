@@ -33,7 +33,7 @@ function App() {
           <Route
             path="adopciones"
             element={
-              <RutaProtegida rolRequerido="ADMIN">
+              <RutaProtegida rolesPermitidos={["ADMIN", "TRABAJADOR"]}>
                 <Adopciones />
               </RutaProtegida>
             }

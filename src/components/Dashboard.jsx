@@ -60,54 +60,37 @@ export default function Dashboard() {
         </div>
 
         <nav className="header-center dashboard-nav">
-          <NavLink
-            to="/animales"
-            className={({ isActive }) => (isActive ? "active" : "")}
-            data-tooltip-id="tooltip"
-            data-tooltip-content="Animales"
-          >
+          <NavLink to="/animales" className={({ isActive }) => (isActive ? "active" : "")}
+            data-tooltip-id="tooltip" data-tooltip-content="Animales">
             <LuDog />
           </NavLink>
-          <NavLink
-            to="/citas"
-            className={({ isActive }) => (isActive ? "active" : "")}
-            data-tooltip-id="tooltip"
-            data-tooltip-content="Citas"
-          >
+
+          <NavLink to="/citas" className={({ isActive }) => (isActive ? "active" : "")}
+            data-tooltip-id="tooltip" data-tooltip-content="Citas">
             <IoCalendarOutline />
           </NavLink>
+
+          {(user?.rol === "ADMIN" || user?.rol === "TRABAJADOR") && (
+            <NavLink to="/adopciones" className={({ isActive }) => (isActive ? "active" : "")}
+              data-tooltip-id="tooltip" data-tooltip-content="Adopciones">
+              <GiDogHouse />
+            </NavLink>
+          )}
+
           {user?.rol === "ADMIN" && (
             <>
-              <NavLink
-                to="/adopciones"
-                className={({ isActive }) => (isActive ? "active" : "")}
-                data-tooltip-id="tooltip"
-                data-tooltip-content="Adopciones"
-              >
-                <GiDogHouse />
-              </NavLink>
-
-              <NavLink
-                to="/graficos"
-                className={({ isActive }) => (isActive ? "active" : "")}
-                data-tooltip-id="tooltip"
-                data-tooltip-content="Estadísticas"
-              >
+              <NavLink to="/graficos" className={({ isActive }) => (isActive ? "active" : "")}
+                data-tooltip-id="tooltip" data-tooltip-content="Estadísticas">
                 <MdOutlineQueryStats />
               </NavLink>
-
-              <NavLink
-                to="/crear-usuario"
-                className={({ isActive }) => (isActive ? "active" : "")}
-                data-tooltip-id="tooltip"
-                data-tooltip-content="Crear usuario"
-              >
+              <NavLink to="/crear-usuario" className={({ isActive }) => (isActive ? "active" : "")}
+                data-tooltip-id="tooltip" data-tooltip-content="Crear usuario">
                 <MdPersonAdd />
               </NavLink>
             </>
           )}
         </nav>
-
+        
         <div className="header-right">
           <div className="usuario-info">
             <span>{user?.nombre}</span>
