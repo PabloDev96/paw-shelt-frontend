@@ -227,14 +227,13 @@
     gap: 0.6rem;
   }
 
-  /* El círculo activo reduce padding para no “desbordar” */
   .dashboard-nav a.active {
     padding: 0.3rem;
     transform: scale(1.06);
   }
 }
 
-/* ===== <= 400px ===== */
+
 @media (max-width: 400px) {
   .logo {
     gap: 0rem;
@@ -256,9 +255,16 @@
     gap: 1.6rem;
   }
 
-  /* Aún un poco más compacto en móviles muy pequeños */
   .dashboard-nav a.active {
     padding: 0.2rem;
     transform: scale(1.04);
   }
 }
+
+
+@media (max-width: 600px) {
+  .logo-text {
+    display: none;
+  }
+}
+
