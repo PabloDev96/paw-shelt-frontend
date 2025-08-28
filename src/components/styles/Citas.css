@@ -371,3 +371,33 @@
     grid-template-columns: 1fr;
   }
 }
+
+.citas-paginacion {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.citas-page-btn {
+  background: var(--medium-light);
+  color: var(--dark);
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter .15s ease;
+}
+
+.citas-page-btn:hover { filter: brightness(0.95); }
+.citas-page-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.citas-page-info {
+  font-weight: 600;
+  color: var(--dark);
+  background: var(--light);
+  padding: 4px 10px;
+  border-radius: 6px;
+}

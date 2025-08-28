@@ -583,3 +583,33 @@
 
 button:disabled { cursor: not-allowed; opacity: .7; }
 .btn-archivo.disabled { pointer-events: none; opacity: .6; }
+
+.animales-paginacion {
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.page-btn {
+  background: var(--medium-light);
+  color: var(--dark);
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter .15s ease;
+}
+
+.page-btn:hover { filter: brightness(0.95); }
+.page-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.page-info {
+  font-weight: 600;
+  color: var(--dark);
+  background: var(--light);
+  padding: 4px 10px;
+  border-radius: 6px;
+}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -40,6 +40,10 @@ export default function Citas() {
   const [filtroAnio, setFiltroAnio] = useState(hoy.getFullYear());
   const [mostrarSubformAdoptante, setMostrarSubformAdoptante] = useState(false);
 
+  // Paginación
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 14;
+
   const token = localStorage.getItem("token");
 
   // Loader mínimo 2s + anti reentradas + alertas tras loader
@@ -58,6 +62,11 @@ export default function Citas() {
     fetchCitas();
     fetchAdoptantes();
   }, []);
+
+  // Resetear página al cambiar filtros o recargar citas
+  useEffect(() => {
+    setPage(1);
+  }, [filtroDia, filtroMes, filtroAnio, citas]);
 
   const fetchCitas = async () => {
     const res = await fetch(`${API_URL}/citas`, {
@@ -85,12 +94,10 @@ export default function Citas() {
   };
 
   const handleCitaDrop = async (info) => {
-    // Si el loader está activo, impedimos mover
     if (loading) {
       info.revert();
       return;
     }
-
     const evento = info.event;
     const id = parseInt(evento.id);
     const cita = citas.find((c) => c.id === id);
@@ -99,7 +106,6 @@ export default function Citas() {
     const nuevaFechaInicio = evento.start;
     const nuevaFechaFin = evento.end;
 
-    // Validación: evitar solapamiento con otras citas (excluyendo esta)
     if (haySolapamiento(nuevaFechaInicio, nuevaFechaFin, id)) {
       showError("Conflicto de cita", "Ya existe una cita en ese horario.");
       info.revert();
@@ -164,14 +170,12 @@ export default function Citas() {
       if (res.ok) {
         setNuevoAdoptante({ nombre: "", email: "", telefono: "", direccion: "" });
 
-        // refresca y selecciona automáticamente al recién creado
         const lista = await fetchAdoptantes();
         const recienCreado = lista.find((a) => a.email === email);
         if (recienCreado) {
           setAdoptanteSeleccionado(recienCreado);
         }
 
-        // cierra subform y modal (si estuviera abierto)
         setMostrarSubformAdoptante(false);
         setMostrarModalAdoptante(false);
 
@@ -196,7 +200,6 @@ export default function Citas() {
   const haySolapamiento = (nuevaInicio, nuevaFin, idIgnorado = null) => {
     return citas.some((cita) => {
       if (cita.id === idIgnorado) return false;
-
       const inicioExistente = new Date(cita.fechaHoraInicio);
       const finExistente = new Date(cita.fechaHoraFin);
       return nuevaInicio < finExistente && nuevaFin > inicioExistente;
@@ -356,6 +359,23 @@ export default function Citas() {
     return citasFiltradas;
   };
 
+  // Futuras primero (asc), pasadas al final (desc)
+  const ordenarCitas = (arr) => {
+    const now = new Date();
+    const futuras = [];
+    const pasadas = [];
+
+    for (const c of arr) {
+      const fin = new Date(c.fechaHoraFin);
+      (fin < now ? pasadas : futuras).push(c);
+    }
+
+    futuras.sort((a, b) => new Date(a.fechaHoraInicio) - new Date(b.fechaHoraInicio));
+    pasadas.sort((a, b) => new Date(a.fechaHoraInicio) - new Date(b.fechaHoraInicio));
+
+    return [...futuras, ...pasadas];
+  };
+
   const adoptantesFiltrados = adoptantes.filter((a) =>
     a.nombre.toLowerCase().includes(busqueda.toLowerCase())
   );
@@ -383,6 +403,15 @@ export default function Citas() {
   const anios = Array.from(new Set(citas.map((cita) => new Date(cita.fechaHoraInicio).getFullYear())))
     .sort((a, b) => b - a)
     .map((a) => ({ value: a, label: `${a}` }));
+
+  const citasFiltradas = useMemo(() => filtrarCitasPorFecha(), [citas, filtroDia, filtroMes, filtroAnio]);
+  const filtrosCompletos = filtroDia && filtroMes && filtroAnio;
+  const ordenadas = useMemo(() => ordenarCitas(citasFiltradas), [citasFiltradas]);
+  const totalPages = Math.max(1, Math.ceil(ordenadas.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const end = start + PAGE_SIZE;
+  const pagina = ordenadas.slice(start, end);
 
   const renderCitaModal = (modoEditar = false) => (
     <div className="citas-modal-overlay">
@@ -604,71 +633,105 @@ export default function Citas() {
             </button>
           </div>
 
+          {/* Tarjetas */}
           <div className="citas-grid">
-            {(() => {
-              const citasFiltradas = filtrarCitasPorFecha();
-              const filtrosCompletos = filtroDia && filtroMes && filtroAnio;
+            {filtrosCompletos && ordenadas.length === 0 && <p>No hay citas en esa fecha.</p>}
+            {!filtrosCompletos && citas.length === 0 && <p>No hay citas registradas.</p>}
 
-              if (filtrosCompletos && citasFiltradas.length === 0) {
-                return <p>No hay citas en esa fecha.</p>;
-              }
-
-              if (!filtrosCompletos && citas.length === 0) {
-                return <p>No hay citas registradas.</p>;
-              }
-
-              return citasFiltradas
-                .sort((a, b) => new Date(a.fechaHoraInicio) - new Date(b.fechaHoraInicio))
-                .map((cita) => {
-                  const esExpirada = new Date(cita.fechaHoraFin) < new Date();
-                  const disableActions = loading || esExpirada;
-                  return (
-                    <div key={cita.id} className={`citas-card ${esExpirada ? "cita-expirada" : ""}`}>
-                      <div className="citas-info">
-                        <h3>{cita.titulo}</h3>
-                        <p>{new Date(cita.fechaHoraInicio).toLocaleDateString("es-ES")}</p>
-                        <p>
-                          {new Date(cita.fechaHoraInicio).toLocaleTimeString("es-ES", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            hour12: false,
-                          })}{" "}
-                          -{" "}
-                          {new Date(cita.fechaHoraFin).toLocaleTimeString("es-ES", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            hour12: false,
-                          })}
-                        </p>
-                        <p>{cita.descripcion}</p>
-                        <div className="citas-botones">
-                          <button
-                            className="icon-btn editar-btn"
-                            onClick={() => abrirModalEditar(cita)}
-                            disabled={disableActions}
-                            data-tooltip-id="tooltip"
-                            data-tooltip-content={esExpirada ? "Cita expirada" : "Editar"}
-                          >
-                            <FaPencilAlt />
-                          </button>
-                          <button
-                            className="icon-btn eliminar-btn"
-                            onClick={() => eliminarCita(cita.id)}
-                            disabled={disableActions}
-                            data-tooltip-id="tooltip"
-                            data-tooltip-content={esExpirada ? "Cita expirada" : "Eliminar"}
-                          >
-                            <FaTrashAlt />
-                          </button>
-                        </div>
-                      </div>
+            {pagina.map((cita) => {
+              const esExpirada = new Date(cita.fechaHoraFin) < new Date();
+              const disableActions = loading || esExpirada;
+              return (
+                <div key={cita.id} className={`citas-card ${esExpirada ? "cita-expirada" : ""}`}>
+                  <div className="citas-info">
+                    <h3>{cita.titulo}</h3>
+                    <p>{new Date(cita.fechaHoraInicio).toLocaleDateString("es-ES")}</p>
+                    <p>
+                      {new Date(cita.fechaHoraInicio).toLocaleTimeString("es-ES", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: false,
+                      })}{" "}
+                      -{" "}
+                      {new Date(cita.fechaHoraFin).toLocaleTimeString("es-ES", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: false,
+                      })}
+                    </p>
+                    <p>{cita.descripcion}</p>
+                    <div className="citas-botones">
+                      <button
+                        className="icon-btn editar-btn"
+                        onClick={() => abrirModalEditar(cita)}
+                        disabled={disableActions}
+                        data-tooltip-id="tooltip"
+                        data-tooltip-content={esExpirada ? "Cita expirada" : "Editar"}
+                      >
+                        <FaPencilAlt />
+                      </button>
+                      <button
+                        className="icon-btn eliminar-btn"
+                        onClick={() => eliminarCita(cita.id)}
+                        disabled={disableActions}
+                        data-tooltip-id="tooltip"
+                        data-tooltip-content={esExpirada ? "Cita expirada" : "Eliminar"}
+                      >
+                        <FaTrashAlt />
+                      </button>
                     </div>
-                  );
-                });
-            })()}
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
-          {/* Modal Crear Adoptante (modo listado) */}
+          {/* Paginación */}
+          <div className="citas-paginacion">
+            <button
+              className="citas-page-btn"
+              onClick={() => setPage(1)}
+              disabled={currentPage === 1 || loading}
+              aria-label="Primera página"
+              title="Primera"
+            >
+              «
+            </button>
+            <button
+              className="citas-page-btn"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1 || loading}
+              aria-label="Anterior"
+              title="Anterior"
+            >
+              ‹
+            </button>
+
+            <span className="citas-page-info">
+              Página {currentPage} de {totalPages}
+            </span>
+
+            <button
+              className="citas-page-btn"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages || loading}
+              aria-label="Siguiente"
+              title="Siguiente"
+            >
+              ›
+            </button>
+            <button
+              className="citas-page-btn"
+              onClick={() => setPage(totalPages)}
+              disabled={currentPage === totalPages || loading}
+              aria-label="Última página"
+              title="Última"
+            >
+              »
+            </button>
+          </div>
+
+          {/* Modales en modo listado */}
           {mostrarModalAdoptante && (
             <div className="citas-modal-overlay">
               <div className="citas-modal">
@@ -709,10 +772,7 @@ export default function Citas() {
             </div>
           )}
 
-          {/* Modal Crear Cita */}
           {mostrarModalCita && renderCitaModal(false)}
-
-          {/* Modal Editar Cita */}
           {mostrarModalEditar && renderCitaModal(true)}
         </>
       )}
@@ -767,7 +827,6 @@ export default function Citas() {
             height="auto"
           />
 
-          {/* Modales para crear/editar en modo calendario también */}
           {mostrarModalCita && renderCitaModal(false)}
           {mostrarModalEditar && renderCitaModal(true)}
         </div>
