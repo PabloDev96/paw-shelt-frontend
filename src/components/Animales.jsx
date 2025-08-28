@@ -499,7 +499,7 @@ export default function Animales() {
         ))}
       </div>
 
-      {/* 🔽 Paginación siempre debajo y centrada */}
+      {/* Paginación */}
       <div className="animales-paginacion">
         <button
           className="page-btn"
@@ -549,15 +549,156 @@ export default function Animales() {
 
       {mostrarModal && (
         <div className="modal-overlay" onClick={() => !loading && setMostrarModal(false)}>
-          {/* (contenido del modal de edición/creación) */}
-          {/* ... tu mismo código ... */}
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h3>{modoEdicion ? "Editar Animal" : "Nuevo Animal"}</h3>
+
+            <form onSubmit={handleGuardarAnimal}>
+              <input
+                type="text"
+                placeholder="Nombre"
+                value={nuevoAnimal.nombre}
+                onChange={(e) => actualizarCampo("nombre", e.target.value)}
+                required
+                disabled={loading}
+              />
+
+              <input
+                type="text"
+                placeholder="Raza"
+                value={nuevoAnimal.raza}
+                onChange={(e) => actualizarCampo("raza", e.target.value)}
+                disabled={loading}
+              />
+
+              <div className="edad-container">
+                <input
+                  type="number"
+                  placeholder="Edad"
+                  value={nuevoAnimal.edadCantidad}
+                  onChange={(e) => actualizarCampo("edadCantidad", e.target.value)}
+                  required
+                  disabled={loading}
+                />
+                <select
+                  value={nuevoAnimal.unidadEdad}
+                  onChange={(e) => actualizarCampo("unidadEdad", e.target.value)}
+                  disabled={loading}
+                >
+                  <option value="ANIOS">Años</option>
+                  <option value="MESES">Meses</option>
+                </select>
+              </div>
+
+              <select
+                value={nuevoAnimal.tipo}
+                onChange={(e) => actualizarCampo("tipo", e.target.value)}
+                disabled={loading}
+              >
+                <option value="PERRO">Perro</option>
+                <option value="GATO">Gato</option>
+              </select>
+
+              <select
+                value={nuevoAnimal.sexo}
+                onChange={(e) => actualizarCampo("sexo", e.target.value)}
+                disabled={loading}
+              >
+                <option value="MACHO">Macho</option>
+                <option value="HEMBRA">Hembra</option>
+              </select>
+
+              <select
+                value={nuevoAnimal.estado}
+                onChange={(e) => actualizarCampo("estado", e.target.value)}
+                disabled={loading}
+              >
+                <option value="EN_ADOPCION">En adopción</option>
+                <option value="ADOPTADO">Adoptado</option>
+                <option value="EN_CASA_DE_ACOGIDA">En casa de acogida</option>
+              </select>
+
+              <div className="foto-uploader">
+                <label className={`btn-archivo ${loading ? "disabled" : ""}`} title="Subir foto">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0] || null;
+                      setFotoFile(f);
+                      setPreviewFoto(f ? URL.createObjectURL(f) : (nuevoAnimal.fotoPerfilUrl || ""));
+                    }}
+                    style={{ display: "none" }}
+                    disabled={loading}
+                  />
+                  <LuImagePlus />
+                </label>
+
+                {previewFoto && (
+                  <img
+                    src={previewFoto}
+                    alt="preview"
+                    className="preview-foto"
+                    onError={(e) => (e.currentTarget.style.display = "none")}
+                  />
+                )}
+              </div>
+
+              <textarea
+                placeholder="Descripción"
+                value={nuevoAnimal.descripcion}
+                onChange={(e) => actualizarCampo("descripcion", e.target.value)}
+                disabled={loading}
+              />
+
+              <div className="modal-actions">
+                <button type="submit" disabled={loading}>
+                  {modoEdicion ? "Guardar cambios" : "Crear"}
+                </button>
+                <button type="button" onClick={() => setMostrarModal(false)} disabled={loading}>
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 
       {mostrarModalInfo && animalDetalle && (
         <div className="modal-overlay" onClick={() => setMostrarModalInfo(false)}>
-          {/* (contenido del modal de info) */}
-          {/* ... tu mismo código ... */}
+          <div className="modal modal-info" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>{animalDetalle.nombre}</h3>
+              <button className="cerrar-modal" onClick={() => setMostrarModalInfo(false)}>
+                <IoClose />
+              </button>
+            </div>
+
+            <div className="modal-scroll">
+              <img
+                src={animalDetalle.fotoPerfilUrl || "/images/placeholder-animal.jpg"}
+                alt={animalDetalle.nombre}
+                className="modal-img"
+                onError={(e) => (e.currentTarget.src = "/images/placeholder-animal.jpg")}
+              />
+
+              <div className="info-linea">
+                {animalDetalle.tipo === "PERRO" ? <FaDog /> : <FaCat />}
+                {animalDetalle.sexo === "MACHO" ? <MdMale /> : <MdFemale />}
+                <span className="barra">|</span>
+                <strong>{animalDetalle.raza}</strong>
+                <span className="barra">|</span>
+                <strong>
+                  {animalDetalle.edadCantidad} {formatearEnum(animalDetalle.unidadEdad)}
+                </strong>
+              </div>
+
+              <div className="info-linea">
+                <strong>{formatearEnum(animalDetalle.estado)}</strong>
+              </div>
+
+              <p>{animalDetalle.descripcion}</p>
+            </div>
+          </div>
         </div>
       )}
 
