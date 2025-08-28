@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { showConfirm } from "../utils/alerts";
-import { FaTrashAlt } from "react-icons/fa";
+import { FaTrashAlt, FaAngleLeft, FaAngleRight } from "react-icons/fa";
 import { FaRegFilePdf } from "react-icons/fa6";
 import "./styles/ListadoAdopciones.css";
 import {
@@ -300,14 +300,15 @@ export default function ListadoAdopciones() {
 
       <div className="pagination-buttons">
         <button onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage() || loading}>
-          {"<"}
-        </button>
-        <button onClick={() => table.nextPage()} disabled={!table.getCanNextPage() || loading}>
-          {">"}
+          <FaAngleLeft />
         </button>
         <span className="pagination-info">
           Página {table.getState().pagination.pageIndex + 1} de {table.getPageCount()}
         </span>
+        <button onClick={() => table.nextPage()} disabled={!table.getCanNextPage() || loading}>
+          <FaAngleRight />
+        </button>
+        
       </div>
     </div>
   );

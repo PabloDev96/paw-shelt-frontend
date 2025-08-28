@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef, useLayoutEffect } from "react";
 import "./styles/Animales.css";
 import { showConfirm } from "../utils/alerts";
 import { useNavigate } from "react-router-dom";
-import { FaPencilAlt, FaTrashAlt, FaDog, FaCat, FaPlus } from "react-icons/fa";
+import { FaPencilAlt, FaTrashAlt, FaDog, FaCat, FaPlus, FaAngleRight, FaAngleLeft, FaAngleDoubleRight, FaAngleDoubleLeft } from "react-icons/fa";
 import { LuImagePlus } from "react-icons/lu";
 import { FaCircleInfo } from "react-icons/fa6";
 import { IoClose } from "react-icons/io5";
@@ -508,7 +508,7 @@ export default function Animales() {
           aria-label="Primera página"
           title="Primera"
         >
-          «
+          <FaAngleDoubleLeft />
         </button>
         <button
           className="page-btn"
@@ -517,7 +517,7 @@ export default function Animales() {
           aria-label="Anterior"
           title="Anterior"
         >
-          ‹
+          < FaAngleLeft />
         </button>
 
         <span className="page-info">
@@ -531,7 +531,7 @@ export default function Animales() {
           aria-label="Siguiente"
           title="Siguiente"
         >
-          ›
+          < FaAngleRight />
         </button>
         <button
           className="page-btn"
@@ -540,7 +540,7 @@ export default function Animales() {
           aria-label="Última página"
           title="Última"
         >
-          »
+          <FaAngleDoubleRight />
         </button>
       </div>
 

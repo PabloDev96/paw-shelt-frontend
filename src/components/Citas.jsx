@@ -8,7 +8,7 @@ import "@fullcalendar/core/locales/es";
 import "./styles/fullcalendar-custom.css";
 
 import { IoMdPerson } from "react-icons/io";
-import { FaPencilAlt, FaTrashAlt, FaList, FaPlus } from "react-icons/fa";
+import { FaPencilAlt, FaTrashAlt, FaList, FaPlus, FaAngleRight, FaAngleLeft, FaAngleDoubleRight, FaAngleDoubleLeft } from "react-icons/fa";
 import { IoCalendarOutline } from "react-icons/io5";
 import { showError, showSuccess, showConfirm } from "../utils/alerts";
 import Select from "react-select";
@@ -695,7 +695,7 @@ export default function Citas() {
               aria-label="Primera página"
               title="Primera"
             >
-              «
+              <FaAngleDoubleLeft />
             </button>
             <button
               className="citas-page-btn"
@@ -704,7 +704,7 @@ export default function Citas() {
               aria-label="Anterior"
               title="Anterior"
             >
-              ‹
+              <FaAngleLeft />
             </button>
 
             <span className="citas-page-info">
@@ -718,7 +718,7 @@ export default function Citas() {
               aria-label="Siguiente"
               title="Siguiente"
             >
-              ›
+              <FaAngleRight />
             </button>
             <button
               className="citas-page-btn"
@@ -727,7 +727,7 @@ export default function Citas() {
               aria-label="Última página"
               title="Última"
             >
-              »
+              <FaAngleDoubleRight />
             </button>
           </div>
 
