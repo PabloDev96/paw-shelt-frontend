@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { showError } from "../utils/alerts";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import Swal from "sweetalert2";
@@ -11,7 +11,6 @@ const MySwal = withReactContent(Swal);
 const PING_PATH = "/ping";
 const MIN_LOADER_MS = 3000; // mínimo de 3 segundos
 
-// Helper para garantizar tiempo mínimo
 const waitMinTime = (start, action) => {
   const elapsed = Date.now() - start;
   if (elapsed < MIN_LOADER_MS) {
@@ -22,19 +21,32 @@ const waitMinTime = (start, action) => {
 };
 
 export default function Login() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const skipWelcome =
+    location.state?.skipWelcome === true ||
+    sessionStorage.getItem("skipLoginWelcome") === "1";
+
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const [serverReady, setServerReady] = useState(false);
-  const [isWaking, setIsWaking] = useState(true);
+  const [serverReady, setServerReady] = useState(skipWelcome); // 👈 listo desde el logout
+  const [isWaking, setIsWaking] = useState(!skipWelcome); // 👈 no mostrar loader si logout
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const navigate = useNavigate();
+
   const firstRun = useRef(true);
 
   useEffect(() => {
     if (!firstRun.current) return;
     firstRun.current = false;
+
+    if (skipWelcome) {
+      // limpiar la marca para futuros accesos normales
+      sessionStorage.removeItem("skipLoginWelcome");
+      return; // 👈 no ejecuta wakeServer
+    }
 
     const wakeServer = async () => {
       const MAX_WAIT_MS = 300_000;
@@ -68,7 +80,6 @@ export default function Login() {
           if (res.ok) {
             setServerReady(true);
 
-            // quitamos el gif y mostramos bienvenida
             waitMinTime(startWake, () => {
               setIsWaking(false);
 
@@ -108,7 +119,7 @@ export default function Login() {
     };
 
     wakeServer();
-  }, []);
+  }, [skipWelcome]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -152,7 +163,6 @@ export default function Login() {
       localStorage.setItem("user", JSON.stringify({ nombre: data.nombre, rol: data.rol }));
       localStorage.setItem("showLoginSuccess", "true");
 
-      // Redirige al panel respetando los 3s mínimos
       waitMinTime(startSubmit, () => navigate("/animales"));
     } catch (error) {
       console.error("Error al hacer login:", error);
@@ -166,7 +176,6 @@ export default function Login() {
 
   return (
     <div className="login-container">
-      {/* Overlay con el GIF mientras despierta el server o durante el submit */}
       {(isWaking || isSubmitting) && (
         <div className="loader-overlay">
           <img src="/dogloader.gif" alt="Cargando..." className="loader-gif" />
@@ -216,7 +225,6 @@ export default function Login() {
         <button type="submit" disabled={disabled}>
           {serverReady && !isSubmitting ? "Entrar" : "Espere…"}
         </button>
-
       </form>
     </div>
   );

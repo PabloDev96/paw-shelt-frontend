@@ -1,8 +1,11 @@
 import React, { useState } from "react";
 import "./styles/CrearUsuario.css";
+import "./styles/Login.css";
 import { useNavigate } from "react-router-dom";
 import { API_URL } from "../utils/config.js";
 import { useOneFlightLoader } from "../hooks/useOneFlightLoader";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { showError, showSuccess } from "../utils/alerts";
 
 export default function CrearUsuario() {
   const navigate = useNavigate();
@@ -14,8 +17,13 @@ export default function CrearUsuario() {
     rol: "TRABAJADOR",
   });
 
-  // loader con mínimo 2s
-  const { loading, runWithLoader, success, error } = useOneFlightLoader({ minMs: 2000 });
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+
+  // loader con mínimo 2s (solo para overlay/espera)
+  const { loading, runWithLoader } = useOneFlightLoader({ minMs: 2000 });
 
   const handleChange = (e) => {
     setUsuario({ ...usuario, [e.target.name]: e.target.value });
@@ -29,18 +37,25 @@ export default function CrearUsuario() {
     const { nombre, email, password, rol } = usuario;
 
     // Validación básica
-    if (!nombre || !email || !password || !rol) {
-      return error("Campos incompletos", "Por favor completa todos los campos.");
+    if (!nombre || !email || !password || !rol || !confirmPassword) {
+      return showError("Campos incompletos", "Por favor completa todos los campos.");
     }
 
     if (!emailRegex.test(email)) {
-      return error("Correo inválido", "Introduce un correo electrónico válido.");
+      return showError("Correo inválido", "Introduce un correo electrónico válido.");
     }
 
     if (!passwordRegex.test(password)) {
-      return error(
+      return showError(
         "Contraseña inválida",
         "Debe tener al menos 8 caracteres, incluyendo letras y números."
+      );
+    }
+
+    if (password !== confirmPassword) {
+      return showError(
+        "Contraseñas no coinciden",
+        "La Contraseña debe coincidir en ambos campos."
       );
     }
 
@@ -64,20 +79,23 @@ export default function CrearUsuario() {
           throw new Error(data.message || "Error al registrar usuario");
         }
 
-        success("Usuario creado", `${data.nombre || "El usuario"} fue registrado correctamente.`);
+        // Éxito con tu alerta
+        await showSuccess(
+          "Usuario creado",
+          `${data.nombre || "El usuario"} fue registrado correctamente.`
+        );
 
-        // redirige después de un pequeño delay para dejar ver la alerta
-        setTimeout(() => navigate("/animales"), 1200);
+        // redirige después de mostrar el toast
+        navigate("/animales");
       } catch (err) {
         console.error(err);
-        error("Error", err.message || "Algo salió mal.");
+        showError("Error", err.message || "Algo salió mal.");
       }
     });
   };
 
   return (
     <div className="crearusuario-container">
-      {/* Overlay loader */}
       {loading && (
         <div className="loader-overlay">
           <img src="/dogloader.gif" alt="Cargando..." className="loader-gif" />
@@ -109,14 +127,44 @@ export default function CrearUsuario() {
         />
 
         <label htmlFor="password">Contraseña</label>
-        <input
-          type="password"
-          name="password"
-          placeholder="Mínimo 8 caracteres, letras y números"
-          value={usuario.password}
-          onChange={handleChange}
-          disabled={loading}
-        />
+        <div className="password-field">
+          <input
+            type={showPassword ? "text" : "password"}
+            name="password"
+            placeholder="Mínimo 8 caracteres, letras y números"
+            value={usuario.password}
+            onChange={handleChange}
+            disabled={loading}
+          />
+          <button
+            type="button"
+            className="toggle-visibility"
+            onClick={() => setShowPassword((v) => !v)}
+            aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+          >
+            {showPassword ? <FaEye /> : <FaEyeSlash />}
+          </button>
+        </div>
+
+        <label htmlFor="confirmPassword">Confirmar contraseña</label>
+        <div className="password-field">
+          <input
+            type={showConfirmPassword ? "text" : "password"}
+            name="confirmPassword"
+            placeholder="Repite la contraseña"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            disabled={loading}
+          />
+          <button
+            type="button"
+            className="toggle-visibility"
+            onClick={() => setShowConfirmPassword((v) => !v)}
+            aria-label={showConfirmPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+          >
+            {showConfirmPassword ? <FaEye /> : <FaEyeSlash />}
+          </button>
+        </div>
 
         <label htmlFor="rol">Rol</label>
         <select

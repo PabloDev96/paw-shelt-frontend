@@ -45,6 +45,7 @@ export default function Dashboard() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    sessionStorage.setItem("skipLoginWelcome", "1");
     navigate("/");
   };
 

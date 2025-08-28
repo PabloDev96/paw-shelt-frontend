@@ -61,7 +61,7 @@
   color: var(--light);
 }
 
-.crearusuario-box button {
+.crearusuario-box > button {
   margin-top: 1.5rem;
   padding: 0.5rem;
   background-color: var(--medium-light);
@@ -73,7 +73,7 @@
   transition: background-color 0.3s ease;
 }
 
-.crearusuario-box button:hover {
+.crearusuario-box > button:hover {
   background-color: var(--medium);
   color: var(--light);
 }
@@ -83,4 +83,49 @@
   margin-top: 0.5rem;
   font-size: 0.9rem;
   text-align: center;
+}
+
+.password-field {
+  position: relative;
+  width: 100%;
+}
+
+.password-field > input {
+  width: 100%;
+  padding-right: 40px;
+  box-sizing: border-box;
+}
+
+.toggle-visibility {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  padding: 8px 0px 0px 0px;
+  margin: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.85;
+  appearance: none;
+  width: 32px;
+  height: 32px;
+}
+
+.toggle-visibility:hover { opacity: 1; }
+.toggle-visibility:disabled { cursor: not-allowed; opacity: 0.4; }
+
+.toggle-visibility svg {
+  width: 20px;
+  height: 20px;
+  color: var(--light);
+  pointer-events: none;
+}
+
+.toggle-visibility:focus-visible {
+  outline: 2px solid var(--medium-light);
+  outline-offset: 2px;
 }
