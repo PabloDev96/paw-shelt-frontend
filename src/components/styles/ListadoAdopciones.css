@@ -61,13 +61,13 @@
 .listado-adopciones-container thead th:nth-child(1),
 .listado-adopciones-container tbody td:nth-child(1) { width: 170px; } /* Fecha */
 .listado-adopciones-container thead th:nth-child(2),
-.listado-adopciones-container tbody td:nth-child(2) { width: 170px; } /* Animal */
+.listado-adopciones-container tbody td:nth-child(2) { width: 175px; } /* Animal */
 .listado-adopciones-container thead th:nth-child(3),
-.listado-adopciones-container tbody td:nth-child(3) { width: 170px; } /* Adoptante */
+.listado-adopciones-container tbody td:nth-child(3) { width: 175px; } /* Adoptante */
 .listado-adopciones-container thead th:nth-child(4),
-.listado-adopciones-container tbody td:nth-child(4) { width: 230px; } /* Observaciones */
+.listado-adopciones-container tbody td:nth-child(4) { width: 220px; } /* Observaciones */
 .listado-adopciones-container thead th:nth-child(5),
-.listado-adopciones-container tbody td:nth-child(5) { width: 60px; } /* Acciones */
+.listado-adopciones-container tbody td:nth-child(5) { width: 100px; } /* Acciones */
 
 /* Buscador */
 .listado-adopciones-container .listado-adopciones-busqueda {
