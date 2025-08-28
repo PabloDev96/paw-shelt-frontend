@@ -86,7 +86,7 @@ export default function Login() {
               MySwal.fire({
                 title: "¡Bienvenido a Pawshelt!",
                 text: "Inicia sesión para empezar a gestionar tu refugio.",
-                imageUrl: "/logo/pawshelt.png",
+                imageUrl: "/logo/pawshelt.webp",
                 imageWidth: 120,
                 imageAlt: "Logo de Pawshelt",
                 showConfirmButton: false,
@@ -178,7 +178,7 @@ export default function Login() {
     <div className="login-container">
       {(isWaking || isSubmitting) && (
         <div className="loader-overlay">
-          <img src="/dogloader.gif" alt="Cargando..." className="loader-gif" />
+          <img src="/dogloader.webp" alt="Cargando..." className="loader-gif" />
           <p className="loader-text">
             {isWaking ? "Despertando servidor…" : "Iniciando sesión…"}
           </p>

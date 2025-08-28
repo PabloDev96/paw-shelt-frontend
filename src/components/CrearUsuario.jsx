@@ -98,7 +98,7 @@ export default function CrearUsuario() {
     <div className="crearusuario-container">
       {loading && (
         <div className="loader-overlay">
-          <img src="/dogloader.gif" alt="Cargando..." className="loader-gif" />
+          <img src="/dogloader.webp" alt="Cargando..." className="loader-gif" />
           <p className="loader-text">Procesando…</p>
         </div>
       )}

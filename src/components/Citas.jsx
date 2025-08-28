@@ -561,7 +561,7 @@ export default function Citas() {
       {/* Overlay loader global (mínimo 2s) */}
       {loading && (
         <div className="loader-overlay">
-          <img src="/dogloader.gif" alt="Cargando..." className="loader-gif" />
+          <img src="/dogloader.webp" alt="Cargando..." className="loader-gif" />
           <p className="loader-text">Procesando…</p>
         </div>
       )}
