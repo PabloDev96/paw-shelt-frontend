@@ -54,7 +54,7 @@ export default function Dashboard() {
       <header className="dashboard-header" id="app-header">
         <div className="header-left">
           <div className="logo">
-            <img src="/logo/pawshelt.png" alt="Pawshelt" />
+            <img src="/logo/pawshelt.webp" alt="Pawshelt" />
             <span className="logo-text">PawShelt</span>
           </div>
         </div>
@@ -90,7 +90,7 @@ export default function Dashboard() {
             </>
           )}
         </nav>
-        
+
         <div className="header-right">
           <div className="usuario-info">
             <span>{user?.nombre}</span>
