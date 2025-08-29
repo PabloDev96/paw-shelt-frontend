@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { FaPencilAlt, FaTrashAlt, FaDog, FaCat, FaPlus, FaAngleRight, FaAngleLeft, FaAngleDoubleRight, FaAngleDoubleLeft } from "react-icons/fa";
 import { LuImagePlus } from "react-icons/lu";
 import { FaCircleInfo } from "react-icons/fa6";
+import { GiDogHouse } from "react-icons/gi";
 import { IoClose } from "react-icons/io5";
 import { MdMale, MdFemale } from "react-icons/md";
 import { Tooltip } from "react-tooltip";
@@ -269,47 +270,48 @@ export default function Animales() {
     });
   };
 
-  const eliminarAnimal = async (id, estado, nombre) => {
-    const confirmacion = await showConfirm(
-      "Eliminar",
-      `¿Seguro que quieres eliminar a ${nombre || "este animal"}? Esta acción no se puede deshacer.`
-    );
+  const eliminarAnimal = async (id) => {
+    const confirmacion = await showConfirm("Eliminar", "Esta acción no se puede deshacer.");
     if (!confirmacion.isConfirmed) return;
 
     await runWithLoader(async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch(`${API_URL}/animales/${id}`, {
+        const response = await fetch(`${API_URL}/animales/${id}`, {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        if (res.ok) {
+        // Lee texto si lo hay para mensajes de 4xx
+        const detalle = await response.text().catch(() => "");
+
+        if (response.ok) {
           setAnimales((prev) => prev.filter((a) => a.id !== id));
           success("Eliminado", "Animal eliminado correctamente.");
           return;
         }
 
-        let backendMsg = "";
-        try {
-          backendMsg = (await res.text())?.trim();
-        } catch { }
-
-        const msgPorEstado =
-          res.status === 409
-            ? backendMsg || "No puedes eliminar un animal ya adoptado."
-            : res.status === 404
-              ? backendMsg || "El animal no existe o ya fue eliminado."
-              : res.status === 403
-                ? backendMsg || "No tienes permisos para eliminar este animal."
-                : backendMsg || "No se pudo eliminar. Inténtalo de nuevo en unos segundos.";
-
-        alertError(`Error ${res.status}`, msgPorEstado);
-      } catch (err) {
-        alertError("Error de conexión", "No se pudo contactar al servidor.");
+        if (response.status === 403) {
+          alertError(
+            "Permisos insuficientes",
+            "No tienes permisos para eliminar un animal."
+          );
+        } else if (response.status === 409) {
+          alertError(
+            "No se puede eliminar",
+            detalle?.trim() || "No se puede eliminar un animal ya adoptado."
+          );
+        } else if (response.status === 404) {
+          alertError("No encontrado", "El animal no existe o ya fue eliminado.");
+        } else {
+          alertError(`Error ${response.status}`, detalle?.trim() || "No se pudo eliminar.");
+        }
+      } catch {
+        alertError("Error", "Error de conexión");
       }
     });
   };
+
 
   const animalesFiltrados = animales.filter((animal) => {
     const termino = busqueda.toLowerCase();
@@ -477,6 +479,11 @@ export default function Animales() {
 
         {pagina.map((animal) => (
           <div className="animal-card" key={animal.id}>
+            {animal.estado === "ADOPTADO" && (
+              <span className="badge-adoptado" title="Adoptado" aria-label="Adoptado">
+                <GiDogHouse />
+              </span>
+            )}
             <img
               src={animal.fotoPerfilUrl || "/images/placeholder-animal.jpg"}
               alt={animal.nombre}
