@@ -94,6 +94,22 @@ export default function Login() {
                 background: "var(--light)",
                 color: "var(--dark)",
                 customClass: { popup: "swal-popup", title: "swal-title" },
+              }).then(() => {
+                // Modal con credenciales de prueba
+                MySwal.fire({
+                  title: "Credenciales de prueba",
+                  html: `
+        <p>Puedes acceder con el siguiente usuario de prueba:</p>
+        <p><strong>Usuario:</strong> admin@pawshelt.com</p>
+        <p><strong>Contraseña:</strong> admin1234</p>
+    `,
+                  icon: "info",
+                  showConfirmButton: false,
+                  showCloseButton: true,
+                  background: "var(--light)",
+                  color: "var(--dark)",
+                  customClass: { popup: "swal-popup", title: "swal-title" },
+                });
               });
             });
 

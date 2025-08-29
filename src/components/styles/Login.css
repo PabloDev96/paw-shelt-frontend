@@ -188,3 +188,19 @@ html, body {
   outline: 2px solid var(--medium-light);
   outline-offset: 2px;
 }
+
+.swal2-close {
+  opacity: 1 !important;
+  visibility: visible !important;
+  color: var(--dark);
+  font-size: 2rem;
+}
+
+.swal2-close:hover {
+  color: var(--error);
+}
+
+.swal2-close:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
