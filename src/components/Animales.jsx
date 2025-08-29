@@ -269,26 +269,44 @@ export default function Animales() {
     });
   };
 
-  const eliminarAnimal = async (id) => {
-    const confirmacion = await showConfirm("Eliminar", "Esta acción no se puede deshacer.");
+  const eliminarAnimal = async (id, estado, nombre) => {
+    const confirmacion = await showConfirm(
+      "Eliminar",
+      `¿Seguro que quieres eliminar a ${nombre || "este animal"}? Esta acción no se puede deshacer.`
+    );
     if (!confirmacion.isConfirmed) return;
 
     await runWithLoader(async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch(`${API_URL}/animales/${id}`, {
+        const res = await fetch(`${API_URL}/animales/${id}`, {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        if (response.ok) {
+        if (res.ok) {
           setAnimales((prev) => prev.filter((a) => a.id !== id));
           success("Eliminado", "Animal eliminado correctamente.");
-        } else {
-          alertError("Error", "No se pudo eliminar.");
+          return;
         }
+
+        let backendMsg = "";
+        try {
+          backendMsg = (await res.text())?.trim();
+        } catch { }
+
+        const msgPorEstado =
+          res.status === 409
+            ? backendMsg || "No puedes eliminar un animal ya adoptado."
+            : res.status === 404
+              ? backendMsg || "El animal no existe o ya fue eliminado."
+              : res.status === 403
+                ? backendMsg || "No tienes permisos para eliminar este animal."
+                : backendMsg || "No se pudo eliminar. Inténtalo de nuevo en unos segundos.";
+
+        alertError(`Error ${res.status}`, msgPorEstado);
       } catch (err) {
-        alertError("Error", "Error de conexión");
+        alertError("Error de conexión", "No se pudo contactar al servidor.");
       }
     });
   };
