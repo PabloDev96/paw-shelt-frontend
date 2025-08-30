@@ -313,37 +313,57 @@ export default function Animales() {
   };
 
 
-  const animalesFiltrados = animales.filter((animal) => {
-    const termino = busqueda.toLowerCase();
-    const estadoNormalizado = formatearEnum(animal.estado).toLowerCase();
+  const animalesFiltrados = animales
+    .filter((animal) => {
+      const termino = busqueda.toLowerCase();
+      const estadoNormalizado = formatearEnum(animal.estado).toLowerCase();
 
-    if (filtrosSecundarios.sexo && animal.sexo !== filtrosSecundarios.sexo) return false;
+      if (filtrosSecundarios.sexo && animal.sexo !== filtrosSecundarios.sexo) return false;
 
-    const edad = animal.edadCantidad;
-    const unidad = animal.unidadEdad;
+      const edad = animal.edadCantidad;
+      const unidad = animal.unidadEdad;
 
-    if (filtrosSecundarios.etapa === "CACHORRO") {
-      if (!(unidad === "MESES" || (unidad === "ANIOS" && edad <= 1))) return false;
-    } else if (filtrosSecundarios.etapa === "ADULTO") {
-      if (!(unidad === "ANIOS" && edad >= 2 && edad <= 8)) return false;
-    } else if (filtrosSecundarios.etapa === "ANCIANO") {
-      if (!(unidad === "ANIOS" && edad >= 9)) return false;
-    }
+      if (filtrosSecundarios.etapa === "CACHORRO") {
+        if (!(unidad === "MESES" || (unidad === "ANIOS" && edad <= 1))) return false;
+      } else if (filtrosSecundarios.etapa === "ADULTO") {
+        if (!(unidad === "ANIOS" && edad >= 2 && edad <= 8)) return false;
+      } else if (filtrosSecundarios.etapa === "ANCIANO") {
+        if (!(unidad === "ANIOS" && edad >= 9)) return false;
+      }
 
-    return (
-      animal.nombre.toLowerCase().includes(termino) ||
-      animal.raza.toLowerCase().includes(termino) ||
-      estadoNormalizado.includes(termino)
-    );
+      return (
+        animal.nombre.toLowerCase().includes(termino) ||
+        animal.raza.toLowerCase().includes(termino) ||
+        estadoNormalizado.includes(termino)
+      );
+    })
+    .sort((a, b) => {
+      // adoptados al final
+      if (a.estado === "ADOPTADO" && b.estado !== "ADOPTADO") return 1;
+      if (a.estado !== "ADOPTADO" && b.estado === "ADOPTADO") return -1;
+      return 0;
+    });
+
+
+  // Ordenar y paginar (10 por página) 
+  const animalesOrdenados = [...animalesFiltrados].sort((a, b) => {
+    // Disponibles primero, adoptados al final
+    const prio = (x) => (x.estado === "ADOPTADO" ? 1 : 0);
+    const diffEstado = prio(a) - prio(b);
+    if (diffEstado !== 0) return diffEstado;
+
+    // Dentro del mismo grupo, ordenar por fechaIngreso ASC (antiguos primero)
+    const da = a.fechaIngreso ? new Date(a.fechaIngreso) : new Date(0);
+    const db = b.fechaIngreso ? new Date(b.fechaIngreso) : new Date(0);
+    return da - db;
   });
 
-  // ======= Cálculos de paginación (10 por página) =======
-  const totalPages = Math.max(1, Math.ceil(animalesFiltrados.length / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(animalesOrdenados.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
   const start = (currentPage - 1) * PAGE_SIZE;
   const end = start + PAGE_SIZE;
-  const pagina = animalesFiltrados.slice(start, end);
-  // ======================================================
+  const pagina = animalesOrdenados.slice(start, end);
+
 
   return (
     <div className="animales-container">
